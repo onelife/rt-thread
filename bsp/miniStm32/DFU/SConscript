@@ -1,0 +1,10 @@
+import os
+
+# get current directory
+cwd = os.path.normpath(os.getcwd())
+
+src	= Glob('*.c')
+
+group = dict(name = 'DFU', src = src, depend='', CPPPATH = cwd, CPPDEFINES = [''])
+
+Return('group')

@@ -1,0 +1,20 @@
+import rtconfig
+Import('RTT_ROOT')
+from building import *
+
+src_bsp = ['application.c', 'startup.c', 'board.c']
+
+src_drv = ['drv_rtc.c', 'drv_usart.c', 'led.c', 'drv_spi.c', 'drv_gpio_spi.c', \
+'drv_lcd.c', 'drv_oled.c', 'drv_gpio_sccb.c', 'drv_usb_core.c', 'drv_usb_com.c', \
+'drv_usb_mouse.c']
+
+src_drv2 = ['drv_sdcard.c', 'drv_touch.c', 'drv_ir.c', 'drv_camera.c', 'ov7670.c', 'drv_dou.c']
+
+src_hdl = ['hdl_interrupt.c']
+
+src = src_bsp + src_drv + src_drv2 + src_hdl
+CPPPATH = [ GetCurrentDir() ]
+CPPDEFINES = []
+group = DefineGroup('Startup', src, depend = [''], CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES)
+
+Return('group')

@@ -1,0 +1,36 @@
+import os
+import dfu_config
+
+# get current directory
+cwd = os.path.normpath(os.getcwd() + '/../Libraries')
+
+# The set of source files associated with this SConscript file.
+src = Glob(cwd + '/CMSIS/CM3/CoreSupport/*.c')
+src += Glob(cwd + '/CMSIS/CM3/DeviceSupport/ST/STM32F10x/*.c')
+src += Glob(cwd + '/STM32F10x_StdPeriph_Driver/src/*.c')
+
+# starupt scripts for each STM32 kind
+startup_scripts = {}
+startup_scripts['STM32F10X_CL']     = 'startup_stm32f10x_cl.s'
+startup_scripts['STM32F10X_HD']     = 'startup_stm32f10x_hd.s'
+startup_scripts['STM32F10X_HD_VL']  = 'startup_stm32f10x_hd_vl.s'
+startup_scripts['STM32F10X_LD']     = 'startup_stm32f10x_ld.s'
+startup_scripts['STM32F10X_LD_VL']  = 'startup_stm32f10x_ld_vl.s'
+startup_scripts['STM32F10X_MD']     = 'startup_stm32f10x_md.s'
+startup_scripts['STM32F10X_MD_VL']  = 'startup_stm32f10x_md_vl.s'
+startup_scripts['STM32F10X_XL']	    = 'startup_stm32f10x_xl.s'
+
+# add for startup script
+if dfu_config.CROSS_TOOL == 'gcc':
+    src = src + [cwd + '/CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/' + startup_scripts[dfu_config.STM32_TYPE]]
+
+path = [cwd + '/CMSIS/CM3/CoreSupport',
+    cwd + '/CMSIS/CM3/DeviceSupport/ST/STM32F10x',
+    cwd + '/STM32F10x_StdPeriph_Driver/inc',
+    cwd + '/STM32_USB-FS-Device_Driver/inc']
+
+define = ['USE_STDPERIPH_DRIVER', dfu_config.STM32_TYPE]
+
+group = dict(name = 'StdPeriph', src = src, depend='', CPPPATH = path, CPPDEFINES = define)
+
+Return('group')

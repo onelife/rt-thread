@@ -1,0 +1,13 @@
+import os
+
+# get current directory
+cwd = os.path.normpath(os.getcwd() + '/../Libraries')
+
+# The set of source files associated with this SConscript file.
+src = Glob(cwd + '/STM32_USB-FS-Device_Driver/src/*.c')
+
+path = [cwd + '/STM32_USB-FS-Device_Driver/inc']
+
+group = dict(name = 'USB-FS', src = src, depend='', CPPPATH = path, CPPDEFINES = [''])
+
+Return('group')

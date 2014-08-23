@@ -1,0 +1,74 @@
+import os
+import sys
+import string
+import SCons.cpp
+import dfu_config
+
+class Win32Spawn:
+    def spawn(self, sh, escape, cmd, args, env):
+        import subprocess
+
+        newargs = string.join(args[1:], ' ')
+        cmdline = cmd + " " + newargs
+        startupinfo = subprocess.STARTUPINFO()
+        # startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        penv = {}
+        for key, value in env.iteritems():
+            penv[key] = str(value)
+
+        proc = subprocess.Popen(cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, startupinfo=startupinfo, shell = False)
+        data, err = proc.communicate()
+        rv = proc.wait()
+        if data:
+            print data
+        if err:
+            print err
+
+        if rv:
+            return rv
+
+
+TARGET = 'dfu-stm32.' + dfu_config.TARGET_EXT
+
+# prepare building environment
+env = Environment(tools = ['mingw'],
+	AS = dfu_config.AS, ASFLAGS = dfu_config.AFLAGS,
+	CC = dfu_config.CC, CCFLAGS = dfu_config.CFLAGS,
+	AR = dfu_config.AR, ARFLAGS = '-rc',
+	LINK = dfu_config.LINK, LINKFLAGS = dfu_config.LFLAGS)
+
+# patch for win32 spawn
+if env['PLATFORM'] == 'win32' and dfu_config.PLATFORM == 'gcc':
+    win32_spawn = Win32Spawn()
+    win32_spawn.env = env
+    env['SPAWN'] = win32_spawn.spawn
+
+# add program path
+env.PrependENVPath('PATH', dfu_config.EXEC_PATH)
+
+objs = SConscript('SConscript_StdPeriph', variant_dir='build/Libraries', duplicate=0, exports='env')
+if objs.has_key('CPPPATH'):
+    env.Append(CPPPATH = objs['CPPPATH'])
+if objs.has_key('CPPDEFINES'):
+    env.Append(CPPDEFINES = objs['CPPDEFINES'])
+src = objs['src']
+
+objs = SConscript('SConscript_USB-FS', variant_dir='build/Libraries', duplicate=0, exports='env')
+if objs.has_key('CPPPATH'):
+    env.Append(CPPPATH = objs['CPPPATH'])
+if objs.has_key('CPPDEFINES'):
+    env.Append(CPPDEFINES = objs['CPPDEFINES'])
+src += objs['src']
+
+objs = SConscript('SConscript', variant_dir='build', duplicate=0, exports='env')
+if objs.has_key('CPPPATH'):
+    env.Append(CPPPATH = objs['CPPPATH'])
+if objs.has_key('CPPDEFINES'):
+    env.Append(CPPDEFINES = objs['CPPDEFINES'])
+src += objs['src']
+
+# build program
+env.Program(TARGET, src)
+
+env.AddPostAction(TARGET, dfu_config.POST_ACTION)

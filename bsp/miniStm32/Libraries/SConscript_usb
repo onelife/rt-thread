@@ -1,0 +1,20 @@
+import rtconfig
+from building import *
+
+# The set of source files associated with this SConscript file.
+src = Split("""
+STM32_USB-FS-Device_Driver/src/usb_regs.c
+STM32_USB-FS-Device_Driver/src/usb_core.c
+STM32_USB-FS-Device_Driver/src/usb_mem.c
+STM32_USB-FS-Device_Driver/src/usb_int.c
+STM32_USB-FS-Device_Driver/src/usb_init.c
+STM32_USB-FS-Device_Driver/src/usb_sil.c
+""")
+
+
+CPPPATH = [ GetCurrentDir() + '/STM32_USB-FS-Device_Driver/inc']
+CPPDEFINES = []
+
+group = DefineGroup('USB-FS', src, depend = ['MINISTM32_USING_USB'], CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES)
+
+Return('group')
