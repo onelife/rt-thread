@@ -136,18 +136,21 @@
 
 
 /* USART options */
-#define MINISTM32_USART_CONSOLE         (1 << 0)    /* Console device */
+#define MINISTM32_USART_DIRECT_EXE      (1 << 0)    /* Directly execute */
 #define MINISTM32_USART_9BIT            (1 << 1)    /* Word length */
 #define MINISTM32_USART_REMAP(num)      (num << 2)  /* Location number */
 #define MINISTM32_USART_DMA_TX          (1 << 4)    /* DMA TX */
 #define MINISTM32_USART_INT_RX          (1 << 5)    /* INT RX */
+#define MINISTM32_USART_CONSOLE         (1 << 6)    /* Console device */
+
 
 /* SECTION: USART */
 #if defined(MINISTM32_USING_USART1)
 #define USART1_NAME                     "usart1"
-#define USART1_USART_MODE               (MINISTM32_USART_CONSOLE | \
+#define USART1_USART_MODE               (MINISTM32_USART_DIRECT_EXE | \
                                         MINISTM32_USART_REMAP(0) | \
-                                        MINISTM32_USART_INT_RX)
+                                        MINISTM32_USART_INT_RX | \
+                                        MINISTM32_USART_CONSOLE)
 #define USART1_FREQUENCY                (115200)
 #endif
 
@@ -160,23 +163,25 @@
 
 
 /* SPI options */
-#define MINISTM32_SPI_MASTER            (1 << 0)    /* Master mode */
-#define MINISTM32_SPI_AUTOCS            (1 << 1)    /* Auto chip select */
+#define MINISTM32_SPI_DIRECT_EXE        (1 << 0)    /* Directly execute */
+#define MINISTM32_SPI_MASTER            (1 << 1)    /* Master mode */
+#define MINISTM32_SPI_AUTOCS            (1 << 2)    /* Auto chip select */
 /*
     0: Clock idle low, sample on rising edge
     1: Clock idle low, sample on falling edge
     2: Clock idle high, sample on falling edge
     3: Clock idle high, sample on rising edge.
 */
-#define MINISTM32_SPI_CLK_MODE(mode)    (mode << 2) /* Clock mode */
-#define MINISTM32_SPI_REMAP(num)        (num << 4)  /* Pin remap */
-#define MINISTM32_SPI_DMA_TX            (1 << 6)    /* DMA TX */
-#define MINISTM32_SPI_DMA_RX            (1 << 7)    /* DMA RX */
+#define MINISTM32_SPI_CLK_MODE(mode)    (mode << 3) /* Clock mode */
+#define MINISTM32_SPI_REMAP(num)        (num << 5)  /* Pin remap */
+#define MINISTM32_SPI_DMA_TX            (1 << 7)    /* DMA TX */
+#define MINISTM32_SPI_DMA_RX            (1 << 8)    /* DMA RX */
 
 /* SECTION: SPI */
 #if defined(MINISTM32_USING_SPI1)
 #define SPI1_NAME                       "spi1"
-#define SPI1_SPI_MODE                   (MINISTM32_SPI_MASTER | \
+#define SPI1_SPI_MODE                   (MINISTM32_SPI_DIRECT_EXE | \
+                                        MINISTM32_SPI_MASTER | \
                                         MINISTM32_SPI_DMA_TX | \
                                         MINISTM32_SPI_REMAP(0) | \
                                         MINISTM32_SPI_CLK_MODE(3))

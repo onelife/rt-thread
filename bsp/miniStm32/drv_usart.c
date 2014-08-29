@@ -226,6 +226,7 @@ void miniStm32_usart_int_rx_isr(rt_device_t dev)
     struct miniStm32_usart_device     *usart;
     struct miniStm32_usart_int_mode   *int_rx;
 
+    /* interrupt mode receive */
     RT_ASSERT(dev->flag & RT_DEVICE_FLAG_INT_RX);
 
     usart = (struct miniStm32_usart_device *)(dev->user_data);
@@ -366,7 +367,7 @@ static void usart_task_open(struct miniStm32_usart_unit_struct *cfg,
     {
         cfg->usart.status |= USART_STATUS_WRITE_ONLY;
     }
-    if (oflag & RT_DEVICE_OFLAG_NONBLOCKING)
+    if (oflag & (rt_uint16_t)RT_DEVICE_OFLAG_NONBLOCKING)
     {
         cfg->usart.status |= USART_STATUS_NONBLOCKING;
     }
@@ -510,8 +511,8 @@ static void usart_task_write(struct miniStm32_usart_unit_struct *cfg,
     }
     else
     {
-        usart_debug("USART%d: Polling TX (%d)\n", cfg->usart.number, len);
         /* polling mode */
+        usart_debug("USART%d: Polling TX (%d)\n", cfg->usart.number, len);
         while (len)
         {
             while (!(cfg->usart.usart_device->SR & USART_FLAG_TXE));
@@ -590,7 +591,7 @@ static void usart_task_control(struct miniStm32_usart_unit_struct *cfg,
 void usart_task_main_loop(void *parameter)
 {
     struct miniStm32_usart_unit_struct *cfg;
-    union miniStm32_usart_exec_message *exec_msg;
+    union miniStm32_usart_exec_message *p_exec_msg;
     rt_thread_t self;
     rt_bool_t chk_block;
 
@@ -631,7 +632,7 @@ USART_MAIN_LOOP:
     {
 		if(rt_mq_recv(
             &cfg->task.rx_msgs,
-            (void *)&exec_msg,
+            (void *)&p_exec_msg,
             USART_RX_MESSAGE_SIZE,
             RT_WAITING_FOREVER) != RT_EOK)
 		{
@@ -639,32 +640,32 @@ USART_MAIN_LOOP:
 		}
 
         chk_block = RT_FALSE;
-        switch (exec_msg->cmd.cmd)
+        switch (p_exec_msg->cmd.cmd)
         {
         case USART_COMMAND_STATUS:
-            exec_msg->ret.other = (rt_uint32_t)cfg->usart.status;
+            p_exec_msg->ret.other = (rt_uint32_t)cfg->usart.status;
             break;
 
         case USART_COMMAND_OPEN:
-            usart_task_open(cfg, exec_msg);
+            usart_task_open(cfg, p_exec_msg);
             break;
 
         case USART_COMMAND_CLOSE:
-            usart_task_close(cfg, exec_msg);
+            usart_task_close(cfg, p_exec_msg);
             break;
 
         case USART_COMMAND_READ:
-            usart_task_read(cfg, exec_msg);
+            usart_task_read(cfg, p_exec_msg);
             chk_block = RT_TRUE;
             break;
 
         case USART_COMMAND_WRITE:
-            usart_task_write(cfg, exec_msg);
+            usart_task_write(cfg, p_exec_msg);
             chk_block = RT_TRUE;
             break;
 
         case USART_COMMAND_CONTROL:
-            usart_task_control(cfg, exec_msg);
+            usart_task_control(cfg, p_exec_msg);
             break;
 
         default:
@@ -673,10 +674,11 @@ USART_MAIN_LOOP:
 
         if (chk_block && (cfg->usart.status & USART_STATUS_NONBLOCKING))
         {
+            rt_free(p_exec_msg);
             continue;
         }
 
-        rt_event_send(&cfg->task.tx_evts, exec_msg->ret.cmd);
+        rt_event_send(&cfg->task.tx_evts, p_exec_msg->ret.cmd);
     }
 }
 
@@ -731,7 +733,7 @@ static rt_err_t miniStm32_usart_open(rt_device_t dev, rt_uint16_t oflag)
     exec_msg.cmd.other = oflag;
 
     if (!(usart->status & USART_STATUS_START) && \
-        (usart->status & USART_STATUS_CONSOLE))
+        (usart->status & USART_STATUS_DIRECT_EXE))
     {
         struct miniStm32_usart_unit_struct *cfg = RT_NULL;
 
@@ -780,7 +782,7 @@ static rt_err_t miniStm32_usart_close(rt_device_t dev)
     usart = (struct miniStm32_usart_device *)(dev->user_data);
 
     if (!(usart->status & USART_STATUS_START) && \
-        (usart->status & USART_STATUS_CONSOLE))
+        (usart->status & USART_STATUS_DIRECT_EXE))
     {
         struct miniStm32_usart_unit_struct *cfg = RT_NULL;
 
@@ -847,7 +849,7 @@ static rt_size_t miniStm32_usart_read (
     usart = (struct miniStm32_usart_device *)(dev->user_data);
 
     if (!(usart->status & USART_STATUS_START) && \
-        (usart->status & USART_STATUS_CONSOLE))
+        (usart->status & USART_STATUS_DIRECT_EXE))
     {
         struct miniStm32_usart_unit_struct *cfg = RT_NULL;
 
@@ -879,6 +881,8 @@ static rt_size_t miniStm32_usart_read (
 
     do
     {
+        union miniStm32_usart_exec_message *p_exec_msg;
+        
         exec_msg.cmd.cmd = USART_COMMAND_STATUS;
         do
         {
@@ -908,10 +912,17 @@ static rt_size_t miniStm32_usart_read (
         if (exec_msg.ret.other & USART_STATUS_NONBLOCKING)
         {
             nonblock = RT_TRUE;
+            p_exec_msg = rt_malloc(sizeof(union miniStm32_usart_exec_message));
+            if (p_exec_msg == RT_NULL)
+            {
+                ret = RT_ENOMEM;
+                break;
+            }
         }
         else
         {
             nonblock = RT_FALSE;
+            p_exec_msg = &exec_msg;
         }
 
         /* Lock device */
@@ -928,11 +939,11 @@ static rt_size_t miniStm32_usart_read (
             break;
         }
 
-        exec_msg.cmd.cmd = USART_COMMAND_READ;
-        exec_msg.cmd.size = size;
-        exec_msg.cmd.ptr = (rt_uint8_t *)buffer;
-        exec_msg.cmd.other = (rt_uint32_t)pos;
-        ret = usart_task_exec(usart->number, &exec_msg, nonblock);
+        p_exec_msg->cmd.cmd = USART_COMMAND_READ;
+        p_exec_msg->cmd.size = size;
+        p_exec_msg->cmd.ptr = (rt_uint8_t *)buffer;
+        p_exec_msg->cmd.other = (rt_uint32_t)pos;
+        ret = usart_task_exec(usart->number, p_exec_msg, nonblock);
         {
             rt_sem_release(&usart->lock);
             break;
@@ -992,7 +1003,7 @@ static rt_size_t miniStm32_usart_write (
     usart = (struct miniStm32_usart_device *)(dev->user_data);
 
     if (!(usart->status & USART_STATUS_START) && \
-        (usart->status & USART_STATUS_CONSOLE))
+        (usart->status & USART_STATUS_DIRECT_EXE))
     {
         struct miniStm32_usart_unit_struct *cfg = RT_NULL;
 
@@ -1024,6 +1035,8 @@ static rt_size_t miniStm32_usart_write (
 
     do
     {
+        union miniStm32_usart_exec_message *p_exec_msg;
+
         exec_msg.cmd.cmd = USART_COMMAND_STATUS;
         do
         {
@@ -1053,10 +1066,17 @@ static rt_size_t miniStm32_usart_write (
         if (exec_msg.ret.other & USART_STATUS_NONBLOCKING)
         {
             nonblock = RT_TRUE;
+            p_exec_msg = rt_malloc(sizeof(union miniStm32_usart_exec_message));
+            if (p_exec_msg == RT_NULL)
+            {
+                ret = RT_ENOMEM;
+                break;
+            }
         }
         else
         {
             nonblock = RT_FALSE;
+            p_exec_msg = &exec_msg;
         }
 
         /* Lock device */
@@ -1073,11 +1093,11 @@ static rt_size_t miniStm32_usart_write (
             break;
         }
 
-        exec_msg.cmd.cmd = USART_COMMAND_WRITE;
-        exec_msg.cmd.size = size;
-        exec_msg.cmd.ptr = (rt_uint8_t *)buffer;
-        exec_msg.cmd.other = (rt_uint32_t)pos;
-        ret = usart_task_exec(usart->number, &exec_msg, nonblock);
+        p_exec_msg->cmd.cmd = USART_COMMAND_WRITE;
+        p_exec_msg->cmd.size = size;
+        p_exec_msg->cmd.ptr = (rt_uint8_t *)buffer;
+        p_exec_msg->cmd.other = (rt_uint32_t)pos;
+        ret = usart_task_exec(usart->number, p_exec_msg, nonblock);
         {
             rt_sem_release(&usart->lock);
             break;
@@ -1131,7 +1151,7 @@ static rt_err_t miniStm32_usart_control (
     usart = (struct miniStm32_usart_device *)(dev->user_data);
 
     if (!(usart->status & USART_STATUS_START) && \
-        (usart->status & USART_STATUS_CONSOLE))
+        (usart->status & USART_STATUS_DIRECT_EXE))
     {
         struct miniStm32_usart_unit_struct *cfg = RT_NULL;
 

@@ -62,7 +62,7 @@
 
 /* Private defines -----------------------------------------------------------*/
 #define APP_CMD_PHOTO_FRAME 0x00000001
-//#define APP_PHOTO_FRAME
+#define APP_PHOTO_FRAME
 
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
@@ -791,23 +791,13 @@ int rt_application_init()
         rt_kprintf("INIT: LED thread init failed.\n");
     }*/
 
-#if (RT_THREAD_PRIORITY_MAX == 32)
     demo_thread = rt_thread_create(
         "demo",
         rt_demo_thread_entry,
         RT_NULL,
         1024,
-        5,
+        TASK_PRIORITY_APPLICATION,
         20);
-#else
-    demo_thread = rt_thread_create(
-        "demo",
-        rt_demo_thread_entry,
-        RT_NULL,
-        1024,
-        50,
-        20);
-#endif
 
     if(demo_thread != RT_NULL)
     {

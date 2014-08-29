@@ -86,7 +86,7 @@
 #define RT_DEVICE_CTRL_CAMERA_CAPTURE       (0xF7)      /*!< Camera capturing a still image */
 #define RT_DEVICE_CTRL_CAMERA_DISPLAY       (0xF8)      /*!< Camera displaying captured image */
 
-#define RT_DEVICE_OFLAG_NONBLOCKING         (0x0100)
+#define RT_DEVICE_OFLAG_NONBLOCKING         (0x1000)
 /*! fixme: The above defines should be moved to Rtdef.h */
 
 #if (defined(MINISTM32_USING_USART1) && (USART1_USART_MODE & MINISTM32_USART_CONSOLE) )

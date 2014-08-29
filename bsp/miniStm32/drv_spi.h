@@ -30,28 +30,31 @@
 #define SPI_RETRY_TIMES_RX          (10)
 
 /* Config options */
-#define SPI_CONFIG_MASTER           (1 << 0)    /* Master mode */
-#define SPI_CONFIG_AUTOCS           (1 << 1)    /* Auto chip select */
+#define SPI_CONFIG_DIRECT_EXE       (1 << 0)    /* Directly execute */
+#define SPI_CONFIG_MASTER           (1 << 1)    /* Master mode */
+#define SPI_CONFIG_AUTOCS           (1 << 2)    /* Auto chip select */
 /*
     0: Clock idle low, sample on rising edge
     1: Clock idle low, sample on falling edge
     2: Clock idle high, sample on falling edge
     3: Clock idle high, sample on rising edge.
 */
-#define SPI_CONFIG_CLK_MODE_GET(cfg)    ((cfg >> 2) & 0x0003)
-#define SPI_CONFIG_REMAP_GET(cfg)   ((cfg >> 4) & 0x03)
-#define SPI_CONFIG_DMA_TX           (1 << 6)    /* DMA TX */
-#define SPI_CONFIG_DMA_RX           (1 << 7)    /* DMA RX */
+#define SPI_CONFIG_CLK_MODE_GET(cfg)    ((cfg >> 3) & 0x0003)
+#define SPI_CONFIG_REMAP_GET(cfg)   ((cfg >> 5) & 0x03)
+#define SPI_CONFIG_DMA_TX           (1 << 7)    /* DMA TX */
+#define SPI_CONFIG_DMA_RX           (1 << 8)    /* DMA RX */
 
 /* Status options */
-#define SPI_STATUS_MASK             (0x0003)
-#define SPI_STATUS_MASTER           (1 << 0)
-#define SPI_STATUS_AUTOCS           (1 << 1)
-#define SPI_STATUS_READ_ONLY        (1 << 2)
-#define SPI_STATUS_WRITE_ONLY       (1 << 3)
-#define SPI_STATUS_NONBLOCKING      (1 << 4)
-#define SPI_STATUS_TX_BUSY          (1 << 5)
-#define SPI_STATUS_RX_BUSY          (1 << 6)
+#define SPI_STATUS_MASK             (0x0007)
+#define SPI_STATUS_DIRECT_EXE       (1 << 0) 
+#define SPI_STATUS_MASTER           (1 << 1)
+#define SPI_STATUS_AUTOCS           (1 << 2)
+#define SPI_STATUS_START            (1 << 3)
+#define SPI_STATUS_READ_ONLY        (1 << 4)
+#define SPI_STATUS_WRITE_ONLY       (1 << 5)
+#define SPI_STATUS_NONBLOCKING      (1 << 6)
+#define SPI_STATUS_TX_BUSY          (1 << 7)
+#define SPI_STATUS_RX_BUSY          (1 << 8)
 
 /* SPI command options */
 #define SPI_COMMAND_STATUS          (0x000001)
@@ -68,7 +71,7 @@ struct miniStm32_spi_device
 {
     rt_uint8_t              counter;
     rt_uint8_t              number;
-    volatile rt_uint16_t    state;
+    volatile rt_uint16_t    status;
     SPI_TypeDef             *spi_device;
     void                    *tx_mode;
     void                    *rx_mode;

@@ -82,7 +82,7 @@ struct miniStm32_gpio_spi_device
     rt_uint8_t          counter;
     rt_uint8_t          number;
     rt_uint32_t         delay;
-    volatile rt_uint16_t state;
+    volatile rt_uint16_t status;
     GPIO_SPI_TypeDef    spi_device;
     void                *rx_mode;   // TODO: slave mode INT RX?
     struct rt_semaphore lock;

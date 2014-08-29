@@ -143,8 +143,6 @@ static void miniStm32_spiSd_speed(rt_uint8_t level)
  ******************************************************************************/
 static rt_size_t miniStm32_spiSd_read(void *buffer, rt_size_t size)
 {
-    RT_ASSERT(spi_dev != RT_NULL);
-
     rt_uint8_t buf_read[5], ret;
 
     /* Build instruction buffer */
@@ -152,7 +150,7 @@ static rt_size_t miniStm32_spiSd_read(void *buffer, rt_size_t size)
     *(rt_uint8_t **)(&buf_read[1]) = buffer;
     /* Read data */
     miniStm32_spiSd_cs(1);
-    if ((ret = spi_dev->read(spi_dev, MINISTM32_NO_DATA, buf_read, size)) == 0)
+    if ((ret = rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_read, size)) == 0)
     {
         rt_uint8_t *temp = (rt_uint8_t *)buffer;
         sdcard_debug("SPISD: Read failed! (%d, %x %x %x %x %x)\n", ret,
@@ -188,8 +186,6 @@ static rt_uint16_t miniStm32_spiSd_cmd(
     rt_uint32_t arg,
     rt_uint8_t *trail)
 {
-    RT_ASSERT(spi_dev != RT_NULL);
-
     rt_uint8_t buf_ins[11];
     rt_uint8_t buf_res[32];     /* Expect (x+1+4) bytes for CRC, (x+1+19) for CSD/CID */
     rt_uint8_t len_trl, i, j;
@@ -252,7 +248,7 @@ static rt_uint16_t miniStm32_spiSd_cmd(
         /* Send command and get response */
         miniStm32_spiSd_cs(1);
         rt_err_t rst;
-        if ((rst=spi_dev->read(spi_dev, MINISTM32_NO_DATA, buf_ins, sizeof(buf_res))) == 0)
+        if ((rst=rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_ins, sizeof(buf_res))) == 0)
         {
             sdcard_debug("SPISD: Send command failed! (%d, %x %x %x %x %x)\n", rst,
                 buf_res[0], buf_res[1], buf_res[2], buf_res[3], buf_res[4]);
@@ -348,8 +344,6 @@ static rt_uint16_t miniStm32_spiSd_cmd(
  ******************************************************************************/
 static rt_err_t miniStm32_spiSd_readBlock(void *buffer, rt_size_t size)
 {
-    RT_ASSERT(spi_dev != RT_NULL);
-
     rt_uint8_t buf_ins[5];
     rt_uint8_t buf_res[8];      /* Expect 2 bytes for CRC */
     rt_uint8_t i, len_copy;
@@ -366,7 +360,7 @@ static rt_err_t miniStm32_spiSd_readBlock(void *buffer, rt_size_t size)
         {
             /* Send read command */
             miniStm32_spiSd_cs(1);
-            if (spi_dev->read(spi_dev, MINISTM32_NO_DATA, buf_ins, \
+            if (rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_ins, \
                 sizeof(buf_res)) == 0)
             {
                 sdcard_debug("SPISD: Get read command response failed!\n");
@@ -406,13 +400,13 @@ static rt_err_t miniStm32_spiSd_readBlock(void *buffer, rt_size_t size)
 
         /* Send read command */
         miniStm32_spiSd_cs(1);
-        if (spi_dev->read(spi_dev, MINISTM32_NO_DATA, buf_ins, size - len_copy) == 0)
+        if (rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_ins, size - len_copy) == 0)
         {
             sdcard_debug("SPISD: Read data block failed!\n");
             break;
         }
         *(rt_uint8_t **)(&buf_ins[1]) = buf_res;    /* Pointer to RX buffer */
-        if (spi_dev->read(spi_dev, MINISTM32_NO_DATA, buf_ins, sizeof(buf_res)) == 0)
+        if (rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_ins, sizeof(buf_res)) == 0)
         {
             sdcard_debug("SPISD: Read CRC failed!\n");
             break;
@@ -447,8 +441,6 @@ static rt_err_t miniStm32_spiSd_readBlock(void *buffer, rt_size_t size)
  ******************************************************************************/
 static rt_err_t miniStm32_spiSd_writeBlock(void *buffer, rt_uint8_t token)
 {
-    RT_ASSERT(spi_dev != RT_NULL);
-
     rt_err_t ret;
     rt_uint8_t buf_ins[11];
     rt_uint8_t buf_res[8];      /* Expect a byte for data response */
@@ -484,7 +476,7 @@ static rt_err_t miniStm32_spiSd_writeBlock(void *buffer, rt_uint8_t token)
             buf_ins[1] = token;
             *(rt_uint8_t **)(&buf_ins[2]) = (rt_uint8_t *)buffer;   /* Pointer to TX buffer */
             miniStm32_spiSd_cs(1);
-            if (spi_dev->write(spi_dev, MINISTM32_NO_DATA, buf_ins, SD_SECTOR_SIZE) == 0)
+            if (rt_device_write(spi_dev, MINISTM32_NO_DATA, buf_ins, SD_SECTOR_SIZE) == 0)
             {
                 sdcard_debug("SPISD: Write data failed!\n");
                 break;
@@ -496,7 +488,7 @@ static rt_err_t miniStm32_spiSd_writeBlock(void *buffer, rt_uint8_t token)
             buf_ins[2] = 0xff;
             *(rt_uint8_t **)(&buf_ins[3]) = buf_res;    /* Pointer to RX buffer */
             /* Send CRC and read a byte */
-            if (spi_dev->read(spi_dev, MINISTM32_NO_DATA, buf_ins, sizeof(buf_res)) == 0)
+            if (rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_ins, sizeof(buf_res)) == 0)
             {
                 sdcard_debug("SPISD: Write CRC failed!\n");
                 break;
@@ -526,7 +518,7 @@ static rt_err_t miniStm32_spiSd_writeBlock(void *buffer, rt_uint8_t token)
             buf_ins[1] = token;
             *(rt_uint8_t **)(&buf_ins[2]) = RT_NULL;    /* Pointer to TX buffer */
             miniStm32_spiSd_cs(1);
-            if (spi_dev->write(spi_dev, MINISTM32_NO_DATA, buf_ins, 0) != 0)
+            if (rt_device_write(spi_dev, MINISTM32_NO_DATA, buf_ins, 0) != 0)
             {
                 sdcard_debug("SPISD: Write token failed!\n");
                 break;
@@ -609,12 +601,10 @@ rt_uint16_t miniStm32_spiSd_sendCmd(
 void miniStm32_spiSd_deinit(void)
 {
     /* Close SPI device */
-    if (spi_dev != RT_NULL)
-    {
-        spi_dev->close(spi_dev);
-        spi_dev = RT_NULL;
-        sdcard_debug("SPISD: Close device %s\n", SPISD_USING_DEVICE_NAME);
-    }
+    rt_device_close(spi_dev);
+    spi_dev = RT_NULL;
+    sdcard_debug("SPISD: Close device %s\n", SPISD_USING_DEVICE_NAME);
+
     /* Delete timer */
     if (sdTimer != RT_NULL)
     {
@@ -642,8 +632,6 @@ void miniStm32_spiSd_deinit(void)
  ******************************************************************************/
 static rt_err_t rt_spiSd_init(rt_device_t dev)
 {
-    RT_ASSERT(spi_dev != RT_NULL);
-
     rt_uint8_t type, cmd, tril[4];
     rt_uint8_t *buf_res;
     rt_uint8_t retry;
@@ -667,7 +655,7 @@ static rt_err_t rt_spiSd_init(rt_device_t dev)
         }
 
         /* Open SPI device */
-        if (spi_dev->open(spi_dev, RT_DEVICE_OFLAG_RDWR) != RT_EOK)
+        if (rt_device_open(spi_dev, RT_DEVICE_OFLAG_RDWR) != RT_EOK)
         {
             break;
         }
@@ -1253,7 +1241,7 @@ rt_err_t miniStm32_hw_spiSd_init(void)
 
         /* Config chip slect pin */
         spi = (struct miniStm32_spi_device *)(spi_dev->user_data);
-        if (!(spi->state & SPI_STATUS_AUTOCS))
+        if (!(spi->status & SPI_STATUS_AUTOCS))
         {
             GPIO_InitTypeDef gpio_init;
 

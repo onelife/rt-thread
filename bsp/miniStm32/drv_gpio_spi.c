@@ -164,15 +164,15 @@ static void gpio_spi_task_open(
     oflag = (rt_uint16_t)exec_msg->cmd.other;
     if ((oflag & 0x0003) == RT_DEVICE_OFLAG_RDONLY)
     {
-        cfg->spi.state |= GPIO_SPI_STATUS_READ_ONLY;
+        cfg->spi.status |= GPIO_SPI_STATUS_READ_ONLY;
     }
     if ((oflag & 0x0003) == RT_DEVICE_OFLAG_WRONLY)
     {
-        cfg->spi.state |= GPIO_SPI_STATUS_WRITE_ONLY;
+        cfg->spi.status |= GPIO_SPI_STATUS_WRITE_ONLY;
     }
     if (oflag & RT_DEVICE_OFLAG_NONBLOCKING)
     {
-        cfg->spi.state |= GPIO_SPI_STATUS_NONBLOCKING;
+        cfg->spi.status |= GPIO_SPI_STATUS_NONBLOCKING;
     }
 
     cfg->spi.counter++;
@@ -198,7 +198,7 @@ static void gpio_spi_task_read(
     rt_size_t len;
     rt_uint8_t *ptr;
 
-    if (cfg->spi.state & GPIO_SPI_STATUS_WRITE_ONLY)
+    if (cfg->spi.status & GPIO_SPI_STATUS_WRITE_ONLY)
     {
         exec_msg->ret.size = 0;
         exec_msg->ret.ret = -RT_ERROR;
@@ -288,7 +288,7 @@ static void gpio_spi_task_read(
         {
             temp <<= 1;
 
-            if ((cfg->spi.state & GPIO_SPI_STATUS_SAMPLE_EDGE) && \
+            if ((cfg->spi.status & GPIO_SPI_STATUS_SAMPLE_EDGE) && \
                 gpio_spi_toggleSck(cfg->spi.spi_device.sck_port,
                     cfg->spi.spi_device.sck_pin,
                     cfg->spi.delay))
@@ -334,7 +334,7 @@ static void gpio_spi_task_write(
     rt_uint8_t *ptr;
     rt_uint8_t j;
 
-    if (cfg->spi.state & GPIO_SPI_STATUS_READ_ONLY)
+    if (cfg->spi.status & GPIO_SPI_STATUS_READ_ONLY)
     {
         exec_msg->ret.size = 0;
         exec_msg->ret.ret = -RT_ERROR;
@@ -440,12 +440,12 @@ static void gpio_spi_task_control(
 
     case RT_DEVICE_CTRL_MODE_BLOCKING:
         /* Blocking mode operation */
-        cfg->spi.state &= ~(rt_uint16_t)GPIO_SPI_STATUS_NONBLOCKING;
+        cfg->spi.status &= ~(rt_uint16_t)GPIO_SPI_STATUS_NONBLOCKING;
         break;
 
     case RT_DEVICE_CTRL_MODE_NONBLOCKING:
         /* Non-blocking mode operation */
-        cfg->spi.state |= (rt_uint16_t)GPIO_SPI_STATUS_NONBLOCKING;
+        cfg->spi.status |= (rt_uint16_t)GPIO_SPI_STATUS_NONBLOCKING;
         break;
 
     case RT_DEVICE_CTRL_SPI_RX_BUFFER:
@@ -534,7 +534,7 @@ GPIO_SPI_MAIN_LOOP:
         switch (exec_msg->cmd.cmd)
         {
         case GPIO_SPI_COMMAND_STATUS:
-            exec_msg->ret.other = (rt_uint32_t)cfg->spi.state;
+            exec_msg->ret.other = (rt_uint32_t)cfg->spi.status;
             break;
 
         case GPIO_SPI_COMMAND_OPEN:
@@ -563,7 +563,7 @@ GPIO_SPI_MAIN_LOOP:
             break;
         }
 
-        if (chk_block && (cfg->spi.state & GPIO_SPI_STATUS_NONBLOCKING))
+        if (chk_block && (cfg->spi.status & GPIO_SPI_STATUS_NONBLOCKING))
         {
             continue;
         }
@@ -947,7 +947,7 @@ void miniStm32_gpio_spi_rx_isr(rt_device_t dev)
     int_rx = (struct miniStm32_spi_int_mode_t *)(spi->rx_mode);
 
     /* Set status */
-    spi->state |= SPI_STATE_RX_BUSY;
+    spi->status |= SPI_STATE_RX_BUSY;
 
     /* save into rx buffer */
     while (spi->spi_device->SR & SPI_I2S_FLAG_RXNE)
@@ -1037,7 +1037,7 @@ static rt_err_t miniStm32_gpio_spi_unit_init(struct miniStm32_gpio_spi_unit_init
     {
         spi->counter    = 0;
         spi->number     = init->number;
-        spi->state      = init->config & GPIO_SPI_STATUS_MASK;
+        spi->status      = init->config & GPIO_SPI_STATUS_MASK;
         /*
             b'00: Clock idle low, sample on rising edge
             b'01: Clock idle low, sample on falling edge
@@ -1049,13 +1049,13 @@ static rt_err_t miniStm32_gpio_spi_unit_init(struct miniStm32_gpio_spi_unit_init
             b'10: Clock idle high, sample on falling edge
             b'11: Clock idle high, sample on rising edge.
         */
-        if (GPIO_SPI_CONFIG_CLK_MODE_GET(spi->state) == 0x00)
+        if (GPIO_SPI_CONFIG_CLK_MODE_GET(spi->status) == 0x00)
         {
-            spi->state  = GPIO_SPI_CONFIG_CLK_MODE_SET(spi->state, 0x01);
+            spi->status  = GPIO_SPI_CONFIG_CLK_MODE_SET(spi->status, 0x01);
         }
-        else if (GPIO_SPI_CONFIG_CLK_MODE_GET(spi->state) == 0x01)
+        else if (GPIO_SPI_CONFIG_CLK_MODE_GET(spi->status) == 0x01)
         {
-            spi->state  = GPIO_SPI_CONFIG_CLK_MODE_SET(spi->state, 0x00);
+            spi->status  = GPIO_SPI_CONFIG_CLK_MODE_SET(spi->status, 0x00);
         }
         spi->rx_mode    = RT_NULL;  // TODO: INT and DMA RX mode
 

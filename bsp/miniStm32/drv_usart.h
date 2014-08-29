@@ -29,15 +29,16 @@ s ******************************************************************************
 #define USART_RETRY_TIMES_RX            (10)
 
 /* Config options */
-#define USART_CONFIG_CONSOLE            (1 << 0)    /* Console device */
+#define USART_CONFIG_DIRECT_EXE         (1 << 0)    /* Direct execute */
 #define USART_CONFIG_9BIT               (1 << 1)    /* Word length */
 #define USART_CONFIG_REMAP_GET(cfg)     ((cfg >> 2) & 0x03)
 #define USART_CONFIG_DMA_TX             (1 << 4)    /* DMA TX */
 #define USART_CONFIG_INT_RX             (1 << 5)    /* INT RX */
+#define USART_CONFIG_CONSOLE            (1 << 6)    /* Console device */
 
 /* Status options */
 #define USART_STATUS_MASK               (0x0003)
-#define USART_STATUS_CONSOLE            (1 << 0)
+#define USART_STATUS_DIRECT_EXE         (1 << 0)
 #define USART_STATUS_9BIT               (1 << 1)
 #define USART_STATUS_START              (1 << 2)
 #define USART_STATUS_READ_ONLY          (1 << 3)

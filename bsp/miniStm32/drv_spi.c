@@ -142,8 +142,8 @@ void miniStm32_spi_dma_tx_isr(rt_device_t dev)
 	}
     else
     {
-        /* Set status */
-        spi->state &= ~(rt_uint16_t)SPI_STATUS_TX_BUSY;
+        /* Reset status */
+        spi->status &= ~(rt_uint16_t)SPI_STATUS_TX_BUSY;
     }
 }
 
@@ -185,7 +185,7 @@ static rt_err_t miniStm32_spi_dma_tx(
         dma_tx->list_head = dma_node;
 
         /* Enable DMA TX */
-        spi->state |= (rt_uint16_t)SPI_STATUS_TX_BUSY;
+        spi->status |= (rt_uint16_t)SPI_STATUS_TX_BUSY;
         dma_tx->dma_chn->CMAR = (rt_uint32_t)buffer;
         dma_tx->dma_chn->CNDTR = (rt_uint32_t)size;
         DMA_Cmd(dma_tx->dma_chn, ENABLE);
@@ -225,7 +225,7 @@ void miniStm32_spi_rx_isr(rt_device_t dev)
     int_rx = (struct miniStm32_spi_int_mode *)(spi->rx_mode);
 
     /* Set status */
-    spi->state |= SPI_STATUS_RX_BUSY;
+    spi->status |= SPI_STATUS_RX_BUSY;
 
     /* save into rx buffer */
     while (spi->spi_device->SR & SPI_I2S_FLAG_RXNE)
@@ -245,8 +245,7 @@ void miniStm32_spi_rx_isr(rt_device_t dev)
         /* if the next position is read index, discard this 'read char' */
         if (int_rx->save_index == int_rx->read_index)
         {
-            int_rx->read_index ++;
-            if (int_rx->read_index >= SPI_RX_BUFFER_SIZE)
+            if (++int_rx->read_index >= SPI_RX_BUFFER_SIZE)
             {
                 int_rx->read_index = 0;
             }
@@ -256,17 +255,19 @@ void miniStm32_spi_rx_isr(rt_device_t dev)
         rt_hw_interrupt_enable(level);
     }
 
+    /* Reset status */
+    spi->status &= ~(rt_uint16_t)SPI_STATUS_RX_BUSY;
     /* invoke callback */
     if (dev->rx_indicate != RT_NULL)
     {
-        rt_size_t rx_length;
+        rt_size_t rx_len;
 
         /* get rx length */
-        rx_length = int_rx->read_index > int_rx->save_index ?
+        rx_len = int_rx->read_index > int_rx->save_index ?
             SPI_RX_BUFFER_SIZE - int_rx->read_index + int_rx->save_index : \
             int_rx->save_index - int_rx->read_index;
 
-        dev->rx_indicate(dev, rx_length);
+        dev->rx_indicate(dev, rx_len);
     }
 }
 
@@ -345,20 +346,22 @@ static rt_err_t spi_task_exec(rt_uint8_t number,
 static void spi_task_open(struct miniStm32_spi_unit_struct *cfg,
    union miniStm32_spi_exec_message *exec_msg)
 {
+    RT_ASSERT(cfg != RT_NULL);
+
     rt_uint16_t oflag;
 
     oflag = (rt_uint16_t)exec_msg->cmd.other;
     if ((oflag & 0x0003) == RT_DEVICE_OFLAG_RDONLY)
     {
-        cfg->spi.state |= SPI_STATUS_READ_ONLY;
+        cfg->spi.status |= SPI_STATUS_READ_ONLY;
     }
     if ((oflag & 0x0003) == RT_DEVICE_OFLAG_WRONLY)
     {
-        cfg->spi.state |= SPI_STATUS_WRITE_ONLY;
+        cfg->spi.status |= SPI_STATUS_WRITE_ONLY;
     }
-    if (oflag & RT_DEVICE_OFLAG_NONBLOCKING)
+    if (oflag & (rt_uint16_t)RT_DEVICE_OFLAG_NONBLOCKING)
     {
-        cfg->spi.state |= SPI_STATUS_NONBLOCKING;
+        cfg->spi.status |= SPI_STATUS_NONBLOCKING;
     }
 
     cfg->spi.counter++;
@@ -370,6 +373,8 @@ static void spi_task_open(struct miniStm32_spi_unit_struct *cfg,
 static void spi_task_close(struct miniStm32_spi_unit_struct *cfg,
     union miniStm32_spi_exec_message *exec_msg)
 {
+    RT_ASSERT(cfg != RT_NULL);
+
     cfg->spi.counter--;
 
     exec_msg->ret.ret = RT_EOK;
@@ -378,16 +383,19 @@ static void spi_task_close(struct miniStm32_spi_unit_struct *cfg,
 static void spi_task_read(struct miniStm32_spi_unit_struct *cfg,
     union miniStm32_spi_exec_message *exec_msg)
 {
+    RT_ASSERT(cfg != RT_NULL);
+
     rt_off_t pos;
     rt_size_t len;
     rt_uint8_t *ptr;
 
-    if (cfg->spi.state & SPI_STATUS_WRITE_ONLY)
+    if (cfg->spi.status & SPI_STATUS_WRITE_ONLY)
     {
         exec_msg->ret.size = 0;
         exec_msg->ret.ret = -RT_ERROR;
         return;
     }
+
     pos = (rt_off_t)exec_msg->cmd.other;
 
     rt_uint8_t inst_len = *(exec_msg->cmd.ptr);
@@ -462,16 +470,19 @@ static void spi_task_read(struct miniStm32_spi_unit_struct *cfg,
 static void spi_task_write(struct miniStm32_spi_unit_struct *cfg,
     union miniStm32_spi_exec_message *exec_msg)
 {
+    RT_ASSERT(cfg != RT_NULL);
+
     rt_off_t pos;
     rt_size_t len;
     rt_uint8_t *ptr;
 
-    if (cfg->spi.state & SPI_STATUS_READ_ONLY)
+    if (cfg->spi.status & SPI_STATUS_READ_ONLY)
     {
         exec_msg->ret.size = 0;
         exec_msg->ret.ret = -RT_ERROR;
         return;
     }
+
     pos = (rt_off_t)exec_msg->cmd.other;
 
     rt_uint8_t inst_len = *(exec_msg->cmd.ptr);
@@ -502,8 +513,10 @@ static void spi_task_write(struct miniStm32_spi_unit_struct *cfg,
             *(ptr + len) = 0;
         }
     }
-    if ((cfg->device.flag & RT_DEVICE_FLAG_DMA_TX) && (len > 2))
+    if ((cfg->spi.status & SPI_STATUS_START) && \
+        (cfg->device.flag & RT_DEVICE_FLAG_DMA_TX) && (len > 2))
     {
+        /* DMA mode */
         spi_debug("SPI%d: DMA TX DATA\n", cfg->spi.number);
         exec_msg->ret.ret = miniStm32_spi_dma_tx(&cfg->spi,
             (rt_uint32_t *)ptr,
@@ -517,6 +530,8 @@ static void spi_task_write(struct miniStm32_spi_unit_struct *cfg,
     }
     else
     {
+        /* polling mode */
+		spi_debug("SPI%d: Polling TX DATA\n", cfg->spi.number);
         while (len)
         {
             while (!(cfg->spi.spi_device->SR & SPI_I2S_FLAG_TXE));
@@ -532,6 +547,8 @@ static void spi_task_write(struct miniStm32_spi_unit_struct *cfg,
 static void spi_task_control(struct miniStm32_spi_unit_struct *cfg,
     union miniStm32_spi_exec_message *exec_msg)
 {
+    RT_ASSERT(cfg != RT_NULL);
+
     switch (exec_msg->cmd.other)
     {
     case RT_DEVICE_CTRL_SUSPEND:
@@ -548,12 +565,12 @@ static void spi_task_control(struct miniStm32_spi_unit_struct *cfg,
 
     case RT_DEVICE_CTRL_MODE_BLOCKING:
         /* Blocking mode operation */
-        cfg->spi.state &= ~(rt_uint16_t)SPI_STATUS_NONBLOCKING;
+        cfg->spi.status &= ~(rt_uint16_t)SPI_STATUS_NONBLOCKING;
         break;
 
     case RT_DEVICE_CTRL_MODE_NONBLOCKING:
         /* Non-blocking mode operation */
-        cfg->spi.state |= (rt_uint16_t)SPI_STATUS_NONBLOCKING;
+        cfg->spi.status |= (rt_uint16_t)SPI_STATUS_NONBLOCKING;
         break;
 
     case RT_DEVICE_CTRL_SPI_RX_BUFFER:
@@ -593,7 +610,7 @@ static void spi_task_control(struct miniStm32_spi_unit_struct *cfg,
 void spi_task_main_loop(void *parameter)
 {
     struct miniStm32_spi_unit_struct *cfg;
-    union miniStm32_spi_exec_message *exec_msg;
+    union miniStm32_spi_exec_message *p_exec_msg;
     rt_thread_t self;
     rt_bool_t chk_block;
 
@@ -624,7 +641,8 @@ void spi_task_main_loop(void *parameter)
     /* Enable SPI1 */
     SPI_Cmd(cfg->spi.spi_device, ENABLE);
     cfg->device.flag |= RT_DEVICE_FLAG_ACTIVATED;
-
+    
+    cfg->spi.status |= SPI_STATUS_START;
     spi_debug("SPI%d: enter main loop\n", cfg->spi.number);
 
 SPI_MAIN_LOOP:
@@ -633,7 +651,7 @@ SPI_MAIN_LOOP:
     {
 		if(rt_mq_recv(
             &cfg->task.rx_msgs,
-            (void *)&exec_msg,
+            (void *)&p_exec_msg,
             SPI_RX_MESSAGE_SIZE,
             RT_WAITING_FOREVER) != RT_EOK)
 		{
@@ -641,44 +659,45 @@ SPI_MAIN_LOOP:
 		}
 
         chk_block = RT_FALSE;
-        switch (exec_msg->cmd.cmd)
+        switch (p_exec_msg->cmd.cmd)
         {
         case SPI_COMMAND_STATUS:
-            exec_msg->ret.other = (rt_uint32_t)cfg->spi.state;
+            p_exec_msg->ret.other = (rt_uint32_t)cfg->spi.status;
             break;
 
         case SPI_COMMAND_OPEN:
-            spi_task_open(cfg, exec_msg);
+            spi_task_open(cfg, p_exec_msg);
             break;
 
         case SPI_COMMAND_CLOSE:
-            spi_task_close(cfg, exec_msg);
+            spi_task_close(cfg, p_exec_msg);
             break;
 
         case SPI_COMMAND_READ:
-            spi_task_read(cfg, exec_msg);
+            spi_task_read(cfg, p_exec_msg);
             chk_block = RT_TRUE;
             break;
 
         case SPI_COMMAND_WRITE:
-            spi_task_write(cfg, exec_msg);
+            spi_task_write(cfg, p_exec_msg);
             chk_block = RT_TRUE;
             break;
 
         case SPI_COMMAND_CONTROL:
-            spi_task_control(cfg, exec_msg);
+            spi_task_control(cfg, p_exec_msg);
             break;
 
         default:
             break;
         }
 
-        if (chk_block && (cfg->spi.state & SPI_STATUS_NONBLOCKING))
+        if (chk_block && (cfg->spi.status & SPI_STATUS_NONBLOCKING))
         {
+            rt_free(p_exec_msg);
             continue;
         }
 
-        rt_event_send(&cfg->task.tx_evts, exec_msg->ret.cmd);
+        rt_event_send(&cfg->task.tx_evts, p_exec_msg->ret.cmd);
     }
 }
 
@@ -731,6 +750,32 @@ static rt_err_t miniStm32_spi_open(rt_device_t dev, rt_uint16_t oflag)
 
     exec_msg.cmd.cmd = SPI_COMMAND_OPEN;
     exec_msg.cmd.other = oflag;
+
+    if (!(spi->status & SPI_STATUS_START) && \
+    (spi->status & SPI_STATUS_DIRECT_EXE))
+    {
+        struct miniStm32_spi_unit_struct *cfg = RT_NULL;
+
+        switch (spi->number)
+        {
+        case 1:
+            cfg = &spi1;
+            break;
+
+        case 2:
+            cfg = &spi2;
+            break;
+
+        case 3:
+            cfg = &spi3;
+            break;
+        }
+
+        spi_task_open(cfg, &exec_msg);
+
+        return RT_EOK;
+    }
+    
     return spi_task_exec(spi->number, &exec_msg, RT_FALSE);
 }
 
@@ -754,6 +799,31 @@ static rt_err_t miniStm32_spi_close(rt_device_t dev)
     union miniStm32_spi_exec_message exec_msg;
 
     spi = (struct miniStm32_spi_device *)(dev->user_data);
+
+    if (!(spi->status & SPI_STATUS_START) && \
+    (spi->status & SPI_STATUS_DIRECT_EXE))
+    {
+        struct miniStm32_spi_unit_struct *cfg = RT_NULL;
+
+        switch (spi->number)
+        {
+        case 1:
+            cfg = &spi1;
+            break;
+
+        case 2:
+            cfg = &spi2;
+            break;
+
+        case 3:
+            cfg = &spi3;
+            break;
+        }
+
+        spi_task_close(cfg, &exec_msg);
+
+        return RT_EOK;
+    }
 
     exec_msg.cmd.cmd = SPI_COMMAND_CLOSE;
     return spi_task_exec(spi->number, &exec_msg, RT_FALSE);
@@ -797,10 +867,62 @@ static rt_size_t miniStm32_spi_read (
 
     spi = (struct miniStm32_spi_device *)(dev->user_data);
 
+    if (!(spi->status & SPI_STATUS_START) && \
+        (spi->status & SPI_STATUS_DIRECT_EXE))
+    {
+        struct miniStm32_spi_unit_struct *cfg = RT_NULL;
+
+        switch (spi->number)
+        {
+        case 1:
+            cfg = &spi1;
+            break;
+
+        case 2:
+            cfg = &spi2;
+            break;
+
+        case 3:
+            cfg = &spi3;
+            break;
+        }
+
+        while(cfg->spi.status & SPI_STATUS_RX_BUSY);
+
+        exec_msg.cmd.cmd = SPI_COMMAND_READ;
+        exec_msg.cmd.size = size;
+        exec_msg.cmd.ptr = (rt_uint8_t *)buffer;
+        exec_msg.cmd.other = (rt_uint32_t)pos;
+        spi_task_read(cfg, &exec_msg);
+
+        return RT_EOK;
+    }
+
     do
     {
+        union miniStm32_spi_exec_message *p_exec_msg;
+        
         exec_msg.cmd.cmd = SPI_COMMAND_STATUS;
-        ret = spi_task_exec(spi->number, &exec_msg, RT_FALSE);
+        do
+        {
+            ret = spi_task_exec(spi->number, &exec_msg, RT_FALSE);
+            if (ret != RT_EOK)
+            {
+                break;
+            }
+
+            if (exec_msg.ret.other & SPI_STATUS_RX_BUSY)
+            {
+                if (!rt_hw_interrupt_check())
+                {
+                    rt_thread_sleep(SPI_COMMAND_WAIT_TIME);
+                }
+            }
+            else
+            {
+                break;
+            }
+        } while (1);
         if (ret != RT_EOK)
         {
             break;
@@ -809,10 +931,17 @@ static rt_size_t miniStm32_spi_read (
         if (exec_msg.ret.other & SPI_STATUS_NONBLOCKING)
         {
             nonblock = RT_TRUE;
+            p_exec_msg = rt_malloc(sizeof(union miniStm32_spi_exec_message));
+            if (p_exec_msg == RT_NULL)
+            {
+                ret = RT_ENOMEM;
+                break;
+            }
         }
         else
         {
             nonblock = RT_FALSE;
+            p_exec_msg = &exec_msg;
         }
 
         /* Lock device */
@@ -829,11 +958,11 @@ static rt_size_t miniStm32_spi_read (
             break;
         }
 
-        exec_msg.cmd.cmd = SPI_COMMAND_READ;
-        exec_msg.cmd.size = size;
-        exec_msg.cmd.ptr = (rt_uint8_t *)buffer;
-        exec_msg.cmd.other = (rt_uint32_t)pos;
-        ret = spi_task_exec(spi->number, &exec_msg, nonblock);
+        p_exec_msg->cmd.cmd = SPI_COMMAND_READ;
+        p_exec_msg->cmd.size = size;
+        p_exec_msg->cmd.ptr = (rt_uint8_t *)buffer;
+        p_exec_msg->cmd.other = (rt_uint32_t)pos;
+        ret = spi_task_exec(spi->number, p_exec_msg, nonblock);
         {
             rt_sem_release(&spi->lock);
             break;
@@ -892,8 +1021,41 @@ static rt_size_t miniStm32_spi_write (
 
     spi = (struct miniStm32_spi_device *)(dev->user_data);
 
+    if (!(spi->status & SPI_STATUS_START) && \
+        (spi->status & SPI_STATUS_DIRECT_EXE))
+    {
+        struct miniStm32_spi_unit_struct *cfg = RT_NULL;
+
+        switch (spi->number)
+        {
+        case 1:
+            cfg = &spi1;
+            break;
+
+        case 2:
+            cfg = &spi2;
+            break;
+
+        case 3:
+            cfg = &spi3;
+            break;
+        }
+
+        while(cfg->spi.status & SPI_STATUS_RX_BUSY);
+
+        exec_msg.cmd.cmd = SPI_COMMAND_READ;
+        exec_msg.cmd.size = size;
+        exec_msg.cmd.ptr = (rt_uint8_t *)buffer;
+        exec_msg.cmd.other = (rt_uint32_t)pos;
+        spi_task_write(cfg, &exec_msg);
+
+        return RT_EOK;
+    }
+
     do
     {
+        union miniStm32_spi_exec_message *p_exec_msg;
+    
         exec_msg.cmd.cmd = SPI_COMMAND_STATUS;
         do
         {
@@ -923,10 +1085,17 @@ static rt_size_t miniStm32_spi_write (
         if (exec_msg.ret.other & SPI_STATUS_NONBLOCKING)
         {
             nonblock = RT_TRUE;
+            p_exec_msg = rt_malloc(sizeof(union miniStm32_spi_exec_message));
+            if (p_exec_msg == RT_NULL)
+            {
+                ret = RT_ENOMEM;
+                break;
+            }
         }
         else
         {
             nonblock = RT_FALSE;
+            p_exec_msg = &exec_msg;
         }
 
         /* Lock device */
@@ -943,11 +1112,11 @@ static rt_size_t miniStm32_spi_write (
             break;
         }
 
-        exec_msg.cmd.cmd = SPI_COMMAND_WRITE;
-        exec_msg.cmd.size = size;
-        exec_msg.cmd.ptr = (rt_uint8_t *)buffer;
-        exec_msg.cmd.other = (rt_uint32_t)pos;
-        ret = spi_task_exec(spi->number, &exec_msg, nonblock);
+        p_exec_msg->cmd.cmd = SPI_COMMAND_WRITE;
+        p_exec_msg->cmd.size = size;
+        p_exec_msg->cmd.ptr = (rt_uint8_t *)buffer;
+        p_exec_msg->cmd.other = (rt_uint32_t)pos;
+        ret = spi_task_exec(spi->number, p_exec_msg, nonblock);
         {
             rt_sem_release(&spi->lock);
             break;
@@ -999,6 +1168,31 @@ static rt_err_t miniStm32_spi_control (
     union miniStm32_spi_exec_message exec_msg;
 
     spi = (struct miniStm32_spi_device *)(dev->user_data);
+
+    if (!(spi->status & SPI_STATUS_START) && \
+    (spi->status & SPI_STATUS_DIRECT_EXE))
+    {
+        struct miniStm32_spi_unit_struct *cfg = RT_NULL;
+
+        switch (spi->number)
+        {
+        case 1:
+            cfg = &spi1;
+            break;
+
+        case 2:
+            cfg = &spi2;
+            break;
+
+        case 3:
+            cfg = &spi3;
+            break;
+        }
+
+        spi_task_control(cfg, &exec_msg);
+
+        return RT_EOK;
+    }
 
     /* Lock device */
     if (rt_hw_interrupt_check())
@@ -1079,7 +1273,7 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
     {
         spi->counter    = 0;
         spi->number     = init->number;
-        spi->state      = init->config & SPI_STATUS_MASK;
+        spi->status      = init->config & SPI_STATUS_MASK;
         spi->rx_mode    = RT_NULL;  // TODO: INT and DMA RX mode
 
         /* Init lock */
