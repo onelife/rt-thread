@@ -87,8 +87,8 @@
 // </section>
 
 // <section name="LIBC" description="C Runtime library setting" default="always" >
-// <bool name="RT_USING_NEWLIB" description="Using newlib library, only available under GNU GCC" default="true" />
-#define RT_USING_NEWLIB
+// <bool name="RT_USING_LIBC" description="Using C library" default="true" />
+#define RT_USING_LIBC
 // <bool name="RT_USING_PTHREADS" description="Using POSIX threads library" default="true" />
 #define RT_USING_PTHREADS
 // </section>
@@ -212,7 +212,7 @@
 // <bool name="RTGUI_IMAGE_JPEG" description="Using jpeg image in RTGUI" default="true" />
 #define RTGUI_IMAGE_JPEG
 // <bool name="RTGUI_IMAGE_PNG" description="Using png image in RTGUI" default="true" />
-#define RTGUI_IMAGE_PNG
+//#define RTGUI_IMAGE_PNG
 // <bool name="RTGUI_IMAGE_BMP" description="Using bmp image in RTGUI" default="true" />
 #define RTGUI_IMAGE_BMP
 // </section>

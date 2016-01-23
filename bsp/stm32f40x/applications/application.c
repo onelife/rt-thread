@@ -20,11 +20,21 @@
 #include <lwip/sys.h>
 #include <lwip/api.h>
 #include <netif/ethernetif.h>
-#include "stm32_eth.h"
+#include "stm32f4xx_eth.h"
+#endif
+
+#ifdef RT_USING_GDB
+#include <gdb_stub.h>
 #endif
 
 void rt_init_thread_entry(void* parameter)
 {
+    /* GDB STUB */
+#ifdef RT_USING_GDB
+    gdb_set_device("uart6");
+    gdb_start();
+#endif
+
     /* LwIP Initialization */
 #ifdef RT_USING_LWIP
     {

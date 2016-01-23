@@ -176,10 +176,10 @@ static void plug_holes(struct heap_mem *mem)
 /**
  * @ingroup SystemInit
  *
- * This function will init system heap
+ * This function will initialize system heap memory.
  *
- * @param begin_addr the beginning address of system page
- * @param end_addr the end address of system page
+ * @param begin_addr the beginning address of system heap memory.
+ * @param end_addr the end address of system heap memory.
  */
 void rt_system_heap_init(void *begin_addr, void *end_addr)
 {
@@ -304,6 +304,7 @@ void *rt_malloc(rt_size_t size)
 
                 /* create mem2 struct */
                 mem2       = (struct heap_mem *)&heap_ptr[ptr2];
+                mem2->magic = HEAP_MAGIC;
                 mem2->used = 0;
                 mem2->next = mem->next;
                 mem2->prev = ptr;
@@ -540,7 +541,7 @@ void rt_free(void *rmem)
     RT_ASSERT(mem->magic == HEAP_MAGIC);
     /* ... and is now unused. */
     mem->used  = 0;
-    mem->magic = 0;
+    mem->magic = HEAP_MAGIC;
 
     if (mem < lfree)
     {

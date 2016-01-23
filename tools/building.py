@@ -1,3 +1,29 @@
+#
+# File      : building.py
+# This file is part of RT-Thread RTOS
+# COPYRIGHT (C) 2006 - 2015, RT-Thread Development Team
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License along
+#  with this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Change Logs:
+# Date           Author       Notes
+# 2015-01-20     Bernard      Add copyright information
+# 2015-07-25     Bernard      Add LOCAL_CCFLAGS/LOCAL_CPPPATH/LOCAL_CPPDEFINES for
+#                             group definition. 
+#
+
 import os
 import sys
 import string
@@ -27,11 +53,9 @@ class Win32Spawn:
 
         newargs = string.join(args[1:], ' ')
         cmdline = cmd + " " + newargs
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
         # Make sure the env is constructed by strings
-        _e = {k: str(v) for k, v in env.items()}
+        _e = dict([(k, str(v)) for k, v in env.items()])
 
         # Windows(tm) CreateProcess does not use the env passed to it to find
         # the executables. So we have to modify our own PATH to make Popen
@@ -40,8 +64,7 @@ class Win32Spawn:
         os.environ['PATH'] = _e['PATH']
 
         try:
-            proc = subprocess.Popen(cmdline, env=_e,
-                    startupinfo=startupinfo, shell=False)
+            proc = subprocess.Popen(cmdline, env=_e, shell=False)
         except Exception as e:
             print 'Error in calling:\n%s' % cmdline
             print 'Exception: %s: %s' % (e, os.strerror(e.errno))
@@ -70,7 +93,7 @@ def PrepareBuilding(env, root_directory, has_libcpu=False, remove_components = [
                 rtconfig.EXEC_PATH = rtconfig.EXEC_PATH.replace('bin40', 'armcc/bin')
                 Env['LINKFLAGS']=Env['LINKFLAGS'].replace('RV31', 'armcc')
 
-        # reset AR command flags 
+        # reset AR command flags
         env['ARCOM'] = '$AR --create $TARGET $SOURCES'
         env['LIBPREFIX']   = ''
         env['LIBSUFFIX']   = '.lib'
@@ -91,6 +114,8 @@ def PrepareBuilding(env, root_directory, has_libcpu=False, remove_components = [
 
     # add program path
     env.PrependENVPath('PATH', rtconfig.EXEC_PATH)
+    # add rtconfig.h path
+    env.Append(CPPPATH = [str(Dir('#').abspath)])
 
     # add library build action
     act = SCons.Action.Action(BuildLibInstallAction, 'Install compiled library... $TARGET')
@@ -105,7 +130,7 @@ def PrepareBuilding(env, root_directory, has_libcpu=False, remove_components = [
     PreProcessor.process_contents(contents)
     BuildOptions = PreProcessor.cpp_namespace
 
-    # add copy option 
+    # add copy option
     AddOption('--copy',
                       dest='copy',
                       action='store_true',
@@ -151,12 +176,12 @@ def PrepareBuilding(env, root_directory, has_libcpu=False, remove_components = [
         rtconfig.POST_ACTION = ''
 
     # add build library option
-    AddOption('--buildlib', 
-                      dest='buildlib', 
+    AddOption('--buildlib',
+                      dest='buildlib',
                       type='string',
                       help='building library of a component')
-    AddOption('--cleanlib', 
-                      dest='cleanlib', 
+    AddOption('--cleanlib',
+                      dest='cleanlib',
                       action='store_true',
                       default=False,
                       help='clean up the library by --buildlib')
@@ -165,16 +190,17 @@ def PrepareBuilding(env, root_directory, has_libcpu=False, remove_components = [
     AddOption('--target',
                       dest='target',
                       type='string',
-                      help='set target project: mdk/iar/vs/ua')
+                      help='set target project: mdk/mdk4/iar/vs/ua')
 
     #{target_name:(CROSS_TOOL, PLATFORM)}
     tgt_dict = {'mdk':('keil', 'armcc'),
                 'mdk4':('keil', 'armcc'),
+                'mdk5':('keil', 'armcc'),
                 'iar':('iar', 'iar'),
                 'vs':('msvc', 'cl'),
                 'vs2012':('msvc', 'cl'),
                 'cb':('keil', 'armcc'),
-                'ua':('keil', 'armcc')}
+                'ua':('gcc', 'gcc')}
     tgt_name = GetOption('target')
     if tgt_name:
         # --target will change the toolchain settings which clang-analyzer is
@@ -234,22 +260,37 @@ def PrepareBuilding(env, root_directory, has_libcpu=False, remove_components = [
 
     return objs
 
-def PrepareModuleBuilding(env, root_directory):
+def PrepareModuleBuilding(env, root_directory, bsp_directory):
     import rtconfig
 
+    global BuildOptions
     global Env
     global Rtt_Root
+
+    # patch for win32 spawn
+    if env['PLATFORM'] == 'win32':
+        win32_spawn = Win32Spawn()
+        win32_spawn.env = env
+        env['SPAWN'] = win32_spawn.spawn
 
     Env = env
     Rtt_Root = root_directory
 
-    # add build/clean library option for library checking 
-    AddOption('--buildlib', 
-              dest='buildlib', 
+    # parse bsp rtconfig.h to get used component
+    PreProcessor = SCons.cpp.PreProcessor()
+    f = file(bsp_directory + '/rtconfig.h', 'r')
+    contents = f.read()
+    f.close()
+    PreProcessor.process_contents(contents)
+    BuildOptions = PreProcessor.cpp_namespace
+
+    # add build/clean library option for library checking
+    AddOption('--buildlib',
+              dest='buildlib',
               type='string',
               help='building library of a component')
-    AddOption('--cleanlib', 
-              dest='cleanlib', 
+    AddOption('--cleanlib',
+              dest='cleanlib',
               action='store_true',
               default=False,
               help='clean up the library by --buildlib')
@@ -271,7 +312,7 @@ def GetDepend(depend):
             building = False
         elif BuildOptions[depend] != '':
             return BuildOptions[depend]
-          
+
         return building
 
     # for list type depend
@@ -302,6 +343,24 @@ def MergeGroup(src_group, group):
             src_group['CPPDEFINES'] = src_group['CPPDEFINES'] + group['CPPDEFINES']
         else:
             src_group['CPPDEFINES'] = group['CPPDEFINES']
+
+    # for local CCFLAGS/CPPPATH/CPPDEFINES
+    if group.has_key('LOCAL_CCFLAGS'):
+        if src_group.has_key('LOCAL_CCFLAGS'):
+            src_group['LOCAL_CCFLAGS'] = src_group['LOCAL_CCFLAGS'] + group['LOCAL_CCFLAGS']
+        else:
+            src_group['LOCAL_CCFLAGS'] = group['LOCAL_CCFLAGS']
+    if group.has_key('LOCAL_CPPPATH'):
+        if src_group.has_key('LOCAL_CPPPATH'):
+            src_group['LOCAL_CPPPATH'] = src_group['LOCAL_CPPPATH'] + group['LOCAL_CPPPATH']
+        else:
+            src_group['LOCAL_CPPPATH'] = group['LOCAL_CPPPATH']
+    if group.has_key('LOCAL_CPPDEFINES'):
+        if src_group.has_key('LOCAL_CPPDEFINES'):
+            src_group['LOCAL_CPPDEFINES'] = src_group['LOCAL_CPPDEFINES'] + group['LOCAL_CPPDEFINES']
+        else:
+            src_group['LOCAL_CPPDEFINES'] = group['LOCAL_CPPDEFINES']
+
     if group.has_key('LINKFLAGS'):
         if src_group.has_key('LINKFLAGS'):
             src_group['LINKFLAGS'] = src_group['LINKFLAGS'] + group['LINKFLAGS']
@@ -340,15 +399,15 @@ def DefineGroup(name, src, depend, **parameters):
         group['src'] = src
 
     if group.has_key('CCFLAGS'):
-        Env.Append(CCFLAGS = group['CCFLAGS'])
+        Env.AppendUnique(CCFLAGS = group['CCFLAGS'])
     if group.has_key('CPPPATH'):
-        Env.Append(CPPPATH = group['CPPPATH'])
+        Env.AppendUnique(CPPPATH = group['CPPPATH'])
     if group.has_key('CPPDEFINES'):
-        Env.Append(CPPDEFINES = group['CPPDEFINES'])
+        Env.AppendUnique(CPPDEFINES = group['CPPDEFINES'])
     if group.has_key('LINKFLAGS'):
-        Env.Append(LINKFLAGS = group['LINKFLAGS'])
+        Env.AppendUnique(LINKFLAGS = group['LINKFLAGS'])
 
-    # check whether to clean up library 
+    # check whether to clean up library
     if GetOption('cleanlib') and os.path.exists(os.path.join(group['path'], GroupLibFullName(name, Env))):
         if group['src'] != []:
             print 'Remove library:', GroupLibFullName(name, Env)
@@ -363,22 +422,25 @@ def DefineGroup(name, src, depend, **parameters):
         else : group['LIBPATH'] = [GetCurrentDir()]
 
     if group.has_key('LIBS'):
-        Env.Append(LIBS = group['LIBS'])
+        Env.AppendUnique(LIBS = group['LIBS'])
     if group.has_key('LIBPATH'):
-        Env.Append(LIBPATH = group['LIBPATH'])
+        Env.AppendUnique(LIBPATH = group['LIBPATH'])
 
-    objs = Env.Object(group['src'])
+    # check whether to build group library
     if group.has_key('LIBRARY'):
-        objs = Env.Library(name, objs)
+        objs = Env.Library(name, group['src'])
+    else:
+        # only add source
+        objs = group['src']
 
-    # merge group 
+    # merge group
     for g in Projects:
         if g['name'] == name:
             # merge to this group
             MergeGroup(g, group)
             return objs
 
-    # add a new group 
+    # add a new group
     Projects.append(group)
 
     return objs
@@ -424,15 +486,46 @@ def BuildLibInstallAction(target, source, env):
             break
 
 def DoBuilding(target, objects):
+
+    # merge all objects into one list
+    def one_list(l):
+        lst = []
+        for item in l:
+            if type(item) == type([]):
+                lst += one_list(item)
+            else:
+                lst.append(item)
+        return lst
+
+    # handle local group
+    def local_group(group, objects):
+        if group.has_key('LOCAL_CCFLAGS') or group.has_key('LOCAL_CPPPATH') or group.has_key('LOCAL_CPPDEFINES'):
+            CCFLAGS = Env.get('CCFLAGS', '') + group.get('LOCAL_CCFLAGS', '')
+            CPPPATH = Env.get('CPPPATH', ['']) + group.get('LOCAL_CPPPATH', [''])
+            CPPDEFINES = Env.get('CPPDEFINES', ['']) + group.get('LOCAL_CPPDEFINES', [''])
+
+            for source in group['src']:
+                objects.append(Env.Object(source, CCFLAGS = CCFLAGS,
+                    CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES))
+
+            return True
+
+        return False
+
+    objects = one_list(objects)
+
     program = None
     # check whether special buildlib option
     lib_name = GetOption('buildlib')
     if lib_name:
+        objects = [] # remove all of objects
         # build library with special component
         for Group in Projects:
             if Group['name'] == lib_name:
                 lib_name = GroupLibName(Group['name'], Env)
-                objects = Env.Object(Group['src'])
+                if not local_group(Group, objects):
+                    objects = Env.Object(Group['src'])
+
                 program = Env.Library(lib_name, objects)
 
                 # add library copy action
@@ -440,11 +533,17 @@ def DoBuilding(target, objects):
 
                 break
     else:
-        # merge the repeated items in the Env
-        if Env.has_key('CPPPATH')   : Env['CPPPATH'] = list(set(Env['CPPPATH']))
-        if Env.has_key('CPPDEFINES'): Env['CPPDEFINES'] = list(set(Env['CPPDEFINES']))
-        if Env.has_key('LIBPATH')   : Env['LIBPATH'] = list(set(Env['LIBPATH']))
-        if Env.has_key('LIBS')      : Env['LIBS'] = list(set(Env['LIBS']))
+        # remove source files with local flags setting
+        for group in Projects:
+            if group.has_key('LOCAL_CCFLAGS') or group.has_key('LOCAL_CPPPATH') or group.has_key('LOCAL_CPPDEFINES'):
+                for source in group['src']:
+                    for obj in objects:
+                        if source.abspath == obj.abspath or (len(obj.sources) > 0 and source.abspath == obj.sources[0].abspath):
+                            objects.remove(obj)
+
+        # re-add the source files to the objects
+        for group in Projects:
+            local_group(group, objects)
 
         program = Env.Program(target, objects)
 
@@ -458,6 +557,7 @@ def EndBuilding(target, program = None):
     if GetOption('target') == 'mdk':
         from keil import MDKProject
         from keil import MDK4Project
+        from keil import MDK5Project
 
         template = os.path.isfile('template.Uv2')
         if template:
@@ -467,16 +567,23 @@ def EndBuilding(target, program = None):
             if template:
                 MDK4Project('project.uvproj', Projects)
             else:
-                print 'No template project file found.'
+                template = os.path.isfile('template.uvprojx')
+                if template:
+                    MDK5Project('project.uvprojx', Projects)
+                else:
+                    print 'No template project file found.'
 
     if GetOption('target') == 'mdk4':
-        from keil import MDKProject
         from keil import MDK4Project
         MDK4Project('project.uvproj', Projects)
 
+    if GetOption('target') == 'mdk5':
+        from keil import MDK5Project
+        MDK5Project('project.uvprojx', Projects)
+
     if GetOption('target') == 'iar':
         from iar import IARProject
-        IARProject('project.ewp', Projects) 
+        IARProject('project.ewp', Projects)
 
     if GetOption('target') == 'vs':
         from vs import VSProject
@@ -493,7 +600,7 @@ def EndBuilding(target, program = None):
     if GetOption('target') == 'ua':
         from ua import PrepareUA
         PrepareUA(Projects, Rtt_Root, str(Dir('#')))
-    
+
     if GetOption('copy') and program != None:
         MakeCopy(program)
     if GetOption('copy-header') and program != None:
@@ -504,6 +611,9 @@ def EndBuilding(target, program = None):
         CscopeDatabase(Projects)
 
 def SrcRemove(src, remove):
+    if not src:
+        return
+
     if type(src[0]) == type('str'):
         for item in src:
             if os.path.basename(item) in remove:
@@ -520,7 +630,7 @@ def GetVersion():
 
     rtdef = os.path.join(Rtt_Root, 'include', 'rtdef.h')
 
-    # parse rtdef.h to get RT-Thread version 
+    # parse rtdef.h to get RT-Thread version
     prepcessor = SCons.cpp.PreProcessor()
     f = file(rtdef, 'r')
     contents = f.read()
@@ -557,6 +667,11 @@ def GlobSubDir(sub_dir, ext_name):
         dst.append(os.path.relpath(item, sub_dir))
     return dst
 
+def PackageSConscript(package):
+    from package import BuildPackage
+
+    return BuildPackage(package)
+
 def file_path_exist(path, *args):
     return os.path.exists(os.path.join(path, *args))
 
@@ -566,9 +681,9 @@ def do_rm_file(src):
 
 def do_copy_file(src, dst):
     import shutil
-    # check source file 
+    # check source file
     if not os.path.exists(src):
-        return 
+        return
 
     path = os.path.dirname(dst)
     # mkdir if path not exist
@@ -579,13 +694,13 @@ def do_copy_file(src, dst):
 
 def do_copy_folder(src_dir, dst_dir):
     import shutil
-    # check source directory 
+    # check source directory
     if not os.path.exists(src_dir):
         return
-    
+
     if os.path.exists(dst_dir):
         shutil.rmtree(dst_dir)
-    
+
     shutil.copytree(src_dir, dst_dir)
 
 source_ext = ["c", "h", "s", "S", "cpp", "xpm"]
@@ -612,22 +727,22 @@ def MakeCopy(program):
     global source_list
     global Rtt_Root
     global Env
-    
+
     target_path = os.path.join(Dir('#').abspath, 'rt-thread')
-    
+
     if Env['PLATFORM'] == 'win32':
         RTT_ROOT = Rtt_Root.lower()
     else:
         RTT_ROOT = Rtt_Root
-    
+
     if target_path.startswith(RTT_ROOT):
         return
 
     for item in program:
         walk_children(item)
-    
+
     source_list.sort()
-    
+
     # filte source file in RT-Thread
     target_list = []
     for src in source_list:
@@ -638,7 +753,7 @@ def MakeCopy(program):
             target_list.append(src)
 
     source_list = target_list
-    # get source path 
+    # get source path
     src_dir = []
     for src in source_list:
         src = src.replace(RTT_ROOT, '')
@@ -650,10 +765,10 @@ def MakeCopy(program):
         full_path = RTT_ROOT
         for item in sub_path:
             full_path = os.path.join(full_path, item)
-            if full_path not in src_dir: 
+            if full_path not in src_dir:
                 src_dir.append(full_path)
 
-    for item in src_dir: 
+    for item in src_dir:
         source_list.append(os.path.join(item, 'SConscript'))
 
     for src in source_list:
@@ -664,7 +779,7 @@ def MakeCopy(program):
         dst = os.path.join(target_path, dst)
         do_copy_file(src, dst)
 
-    # copy tools directory 
+    # copy tools directory
     print "=>  tools"
     do_copy_folder(os.path.join(RTT_ROOT, "tools"), os.path.join(target_path, "tools"))
     do_copy_file(os.path.join(RTT_ROOT, 'AUTHORS'), os.path.join(target_path, 'AUTHORS'))
@@ -712,7 +827,7 @@ def MakeCopyHeader(program):
         dst = os.path.join(target_path, dst)
         do_copy_file(src, dst)
 
-    # copy tools directory 
+    # copy tools directory
     print "=>  tools"
     do_copy_folder(os.path.join(RTT_ROOT, "tools"), os.path.join(target_path, "tools"))
     do_copy_file(os.path.join(RTT_ROOT, 'AUTHORS'), os.path.join(target_path, 'AUTHORS'))

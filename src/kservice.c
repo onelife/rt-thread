@@ -30,6 +30,7 @@
  * 2012-12-22     Bernard      fix rt_kprintf issue, which found by Grissiom.
  * 2013-06-24     Bernard      remove rt_kprintf if RT_USING_CONSOLE is not defined.
  * 2013-09-24     aozima       make sure the device is in STREAM mode when used by rt_kprintf.
+ * 2015-07-06     Bernard      Add rt_assert_handler routine.
  */
 
 #include <rtthread.h>
@@ -430,7 +431,7 @@ RTM_EXPORT(rt_strncpy);
  *
  * @return the result
  */
-rt_ubase_t rt_strncmp(const char *cs, const char *ct, rt_ubase_t count)
+rt_int32_t rt_strncmp(const char *cs, const char *ct, rt_ubase_t count)
 {
     register signed char __res = 0;
 
@@ -453,7 +454,7 @@ RTM_EXPORT(rt_strncmp);
  *
  * @return the result
  */
-rt_ubase_t rt_strcmp(const char *cs, const char *ct)
+rt_int32_t rt_strcmp(const char *cs, const char *ct)
 {
     while (*cs && *cs == *ct)
         cs++, ct++;
@@ -470,7 +471,7 @@ RTM_EXPORT(rt_strcmp);
  *
  * @return the length of string
  */
-rt_ubase_t rt_strlen(const char *s)
+rt_size_t rt_strlen(const char *s)
 {
     const char *sc;
 
@@ -513,7 +514,7 @@ void rt_show_version(void)
     rt_kprintf("- RT -     Thread Operating System\n");
     rt_kprintf(" / | \\     %d.%d.%d build %s\n",
                RT_VERSION, RT_SUBVERSION, RT_REVISION, __DATE__);
-    rt_kprintf(" 2006 - 2013 Copyright by rt-thread team\n");
+    rt_kprintf(" 2006 - 2015 Copyright by rt-thread team\n");
 }
 RTM_EXPORT(rt_show_version);
 
@@ -1072,8 +1073,8 @@ rt_device_t rt_console_set_device(const char *name)
         }
 
         /* set new console device */
+        rt_device_open(new, RT_DEVICE_OFLAG_RDWR | RT_DEVICE_FLAG_STREAM);
         _console_device = new;
-        rt_device_open(_console_device, RT_DEVICE_OFLAG_RDWR);
     }
 
     return old;
@@ -1114,11 +1115,11 @@ void rt_kprintf(const char *fmt, ...)
     }
     else
     {
-        rt_uint16_t old_flag = _console_device->flag;
+        rt_uint16_t old_flag = _console_device->open_flag;
 
-        _console_device->flag |= RT_DEVICE_FLAG_STREAM;
+        _console_device->open_flag |= RT_DEVICE_FLAG_STREAM;
         rt_device_write(_console_device, 0, rt_log_buf, length);
-        _console_device->flag = old_flag;
+        _console_device->open_flag = old_flag;
     }
 #else
     rt_hw_console_output(rt_log_buf);
@@ -1236,6 +1237,55 @@ int __rt_ffs(int value)
     return __lowest_bit_bitmap[(value & 0xff000000) >> 24] + 25;
 }
 #endif
+
+#ifdef RT_DEBUG
+/* RT_ASSERT(EX)'s hook */
+void (*rt_assert_hook)(const char* ex, const char* func, rt_size_t line);
+/**
+ * This function will set a hook function to RT_ASSERT(EX). It will run when the expression is false.
+ *
+ * @param hook the hook function
+ */
+void rt_assert_set_hook(void (*hook)(const char* ex, const char* func, rt_size_t line)) {
+    rt_assert_hook = hook;
+}
+
+/**
+ * The RT_ASSERT function.
+ *
+ * @param ex the assertion condition string
+ * @param func the function name when assertion.
+ * @param line the file line number when assertion.
+ */
+void rt_assert_handler(const char* ex_string, const char* func, rt_size_t line)
+{
+    volatile char dummy = 0;
+
+    if (rt_assert_hook == RT_NULL)
+    {
+#ifdef RT_USING_MODULE
+		if (rt_module_self() != RT_NULL)
+		{
+			/* unload assertion module */
+			rt_module_unload(rt_module_self());
+
+			/* re-schedule */
+			rt_schedule();
+		}
+		else
+#endif
+		{
+	        rt_kprintf("(%s) assertion failed at function:%s, line number:%d \n", ex_string, func, line);
+	        while (dummy == 0);
+		}
+    }
+	else
+	{
+        rt_assert_hook(ex_string, func, line);
+    }                                                                     
+}
+RTM_EXPORT(rt_assert_handler);
+#endif /* RT_DEBUG */
 
 #if !defined (RT_USING_NEWLIB) && defined (RT_USING_MINILIBC) && defined (__GNUC__)
 #include <sys/types.h>

@@ -174,6 +174,18 @@ static rt_err_t _rym_trans_data(
         return -RYM_ERR_SEQ;
     }
 
+    /* As we are sending C continuously, there is a chance that the
+     * sender(remote) receive an C after sending the first handshake package.
+     * So the sender will interpret it as NAK and re-send the package. So we
+     * just ignore it and proceed. */
+    if (ctx->stage == RYM_STAGE_ESTABLISHED && ctx->buf[1] == 0x00)
+    {
+        *code = RYM_CODE_NONE;
+        return RT_EOK;
+    }
+
+    ctx->stage = RYM_STAGE_TRANSMITTING;
+
     /* sanity check */
     recv_crc = (rt_uint16_t)(*(ctx->buf+tsz-1) << 8) | *(ctx->buf+tsz);
     if (recv_crc != CRC16(ctx->buf+3, data_sz))
@@ -197,7 +209,7 @@ static rt_err_t _rym_do_trans(struct rym_ctx *ctx)
     {
         rt_err_t err;
         enum rym_code code;
-        rt_size_t data_sz;
+        rt_size_t data_sz, i;
 
         code = _rym_read_code(ctx,
                 RYM_WAIT_PKG_TICK);
@@ -214,7 +226,6 @@ static rt_err_t _rym_do_trans(struct rym_ctx *ctx)
         default:
             return -RYM_ERR_CODE;
         };
-        ctx->stage = RYM_STAGE_TRANSMITTING;
 
         err = _rym_trans_data(ctx, data_sz, &code);
         if (err != RT_EOK)
@@ -223,8 +234,9 @@ static rt_err_t _rym_do_trans(struct rym_ctx *ctx)
         {
         case RYM_CODE_CAN:
             /* the spec require multiple CAN */
-            _rym_putchar(ctx, RYM_CODE_CAN);
-            _rym_putchar(ctx, RYM_CODE_CAN);
+            for (i = 0; i < RYM_END_SESSION_SEND_CAN_NUM; i++) {
+                _rym_putchar(ctx, RYM_CODE_CAN);
+            }
             return -RYM_ERR_CAN;
         case RYM_CODE_ACK:
             _rym_putchar(ctx, RYM_CODE_ACK);
@@ -310,6 +322,7 @@ static rt_err_t _rym_do_recv(
 rt_err_t rym_recv_on_device(
         struct rym_ctx *ctx,
         rt_device_t dev,
+        rt_uint16_t oflag,
         rym_callback on_begin,
         rym_callback on_data,
         rym_callback on_end,
@@ -340,7 +353,7 @@ rt_err_t rym_recv_on_device(
     dev->flag &= ~RT_DEVICE_FLAG_STREAM;
     rt_hw_interrupt_enable(int_lvl);
 
-    res = rt_device_open(dev, 0);
+    res = rt_device_open(dev, oflag);
     if (res != RT_EOK)
         goto __exit;
 
@@ -363,4 +376,3 @@ __exit:
 
     return res;
 }
-
