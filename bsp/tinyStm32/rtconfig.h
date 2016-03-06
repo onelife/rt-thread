@@ -17,18 +17,15 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 #define RT_USING_BSP_CMSIS
-
 /* RT_NAME_MAX*/
 #define RT_NAME_MAX					(8)
-
 /* RT_ALIGN_SIZE*/
 #define RT_ALIGN_SIZE				(4)
-
 /* PRIORITY_MAX */
 #define RT_THREAD_PRIORITY_MAX		(32)
-
 /* Tick per Second */
 #define RT_TICK_PER_SECOND			(100)
+
 
 /* SECTION: RT_DEBUG */
 #define RT_DEBUG
@@ -49,30 +46,27 @@
 //#define RT_TIMER_DEBUG
 
 //#define EFM32_DEBUG
+//#define BOARD_LED_DEBUG
 //#define MINISTM32_USART_DEBUG
 //#define MINISTM32_SPI_DEBUG
-//#define MINISTM32_GPIO_SPI_DEBUG
-//#define MINISTM32_GPIO_SCCB_DEBUG
 #define MINISTM32_RTC_DEBUG
 //#define MINISTM32_SDCARD_DEBUG
-//#define MINISTM32_LCD_DEBUG
-#define MINISTM32_OLED_DEBUG
-//#define MINISTM32_TOUCH_DEBUG
-//#define MINISTM32_IR_DEBUG
+//#define MINISTM32_OLED_DEBUG
 //#define EFM32_ETHERNET_DEBUG
 //#define EFM32_KEYS_DEBUG
-//#define MINISTM32_CAMERA_DEBUG
-//#define MINISTM32_USB_DEBUG
-//#define MINISTM32_DOU_DEBUG
+
 
 /* Using Hook */
 //#define RT_USING_HOOK
 
+
+/* SECTION: System Timer */
 /* Using Software Timer */
 /* #define RT_USING_TIMER_SOFT */
 #define RT_TIMER_THREAD_PRIO		    (4)
 #define RT_TIMER_THREAD_STACK_SIZE	    (512)
 #define RT_TIMER_TICK_PER_SECOND	    (10)
+
 
 /* SECTION: IPC */
 /* Using Semaphore*/
@@ -94,44 +88,22 @@
 #define RT_USING_SMALL_MEM
 
 
-/* SECTION: Device Firmware Upgrade */
-//#define MINISTM32_USING_DFU
-
-
 /* SECTION: Device System */
 /* Using Device System */
 #define RT_USING_DEVICE
 
 
-/* SECTION: MiniSTM32 Board */
+/* SECTION: TinySTM32 Board */
 /* Note: Select one from touch screen and IR */
+#define BOARD_USING_LED1
 #define MINISTM32_USING_RTC
 #define MINISTM32_USING_USART1
-//#define MINISTM32_USING_SPISD           /* MicroSD card */
-//#define MINISTM32_USING_LCD             /* TFT LCD (SSD1289) */
-//#define MINISTM32_USING_OLED            /* OLED (SSD1306) */
-//#define MINISTM32_USING_TOUCH           /* Touch screen */
-//#define MINISTM32_USING_CAMERA          /* Camera */
-//#define MINISTM32_USING_IR              /* IR remote control */
-//#define EFM32_USING_KEYS                    /* Keys and joystick */
-//#define MINISTM32_USING_USB
-//#define MINISTM32_USING_USB_VIRTUAL_COM
-//#define MINISTM32_USING_USB_HID_MOUSE
-//#define MINISTM32_USING_DOU             /* Virtual display with mouse input */
+#define BOARD_USING_SPISD               /* MicroSD card */
+//#define BOARD_USING_OLED                /* OLED (SSD1306) */
 
-//#define RTGUI_VIDEO_MJPEG
 
-#if defined(MINISTM32_USING_SPISD)
-#define MINISTM32_USING_SPI1
-#endif
-#if defined(MINISTM32_USING_TOUCH)
-#define MINISTM32_USING_GPIO_SPI1
-#endif
-#if defined(MINISTM32_USING_CAMERA)
-#define MINISTM32_USING_GPIO_SCCB
-#endif
-#if defined(MINISTM32_USING_DOU)
-#define MINISTM32_USING_USART3
+#if (defined(BOARD_USING_OLED) || defined(BOARD_USING_SPISD))
+#define MINISTM32_USING_SPI2
 #endif
 
 
@@ -178,55 +150,22 @@
 #define MINISTM32_SPI_DMA_RX            (1 << 8)    /* DMA RX */
 
 /* SECTION: SPI */
-#if defined(MINISTM32_USING_SPI1)
-#define SPI1_NAME                       "spi1"
-#define SPI1_SPI_MODE                   (MINISTM32_SPI_DIRECT_EXE | \
+#if defined(MINISTM32_USING_SPI2)
+#define SPI2_NAME                       "spi2"
+#define SPI2_SPI_MODE                   (MINISTM32_SPI_DIRECT_EXE | \
                                         MINISTM32_SPI_MASTER | \
                                         MINISTM32_SPI_DMA_TX | \
                                         MINISTM32_SPI_REMAP(0) | \
-                                        MINISTM32_SPI_CLK_MODE(3))
-#endif
-
-/* SECTION: GPIO SPI */
-#if defined(MINISTM32_USING_GPIO_SPI1)
-#define GPIO_SPI1_NAME                  "io_spi1"
-#define GPIO_SPI1_SPI_MODE              (MINISTM32_SPI_MASTER | MINISTM32_SPI_CLK_MODE(0))
-#define GPIO_SPI1_FREQUENCY             (1000000)   /* Max 1MHz */
-#define GPIO_SPI1_SCK_CLOCK             (RCC_APB2Periph_GPIOC)
-#define GPIO_SPI1_SCK_PORT              (GPIOC)
-#define GPIO_SPI1_SCK_PIN               (GPIO_Pin_0)
-#define GPIO_SPI1_MOSI_CLOCK            (RCC_APB2Periph_GPIOC)
-#define GPIO_SPI1_MOSI_PORT             (GPIOC)
-#define GPIO_SPI1_MOSI_PIN              (GPIO_Pin_3)
-#define GPIO_SPI1_MISO_CLOCK            (RCC_APB2Periph_GPIOC)
-#define GPIO_SPI1_MISO_PORT             (GPIOC)
-#define GPIO_SPI1_MISO_PIN              (GPIO_Pin_2)
-#define GPIO_SPI1_CS_CLOCK              (RCC_APB2Periph_GPIOC)
-#define GPIO_SPI1_CS_PORT               (GPIOC)
-#define GPIO_SPI1_CS_PIN                (GPIO_Pin_13)
+                                        MINISTM32_SPI_CLK_MODE(0))
 #endif
 
 
-/* SCCB options */
-#define MINISTM32_SCCB_MASTER           (1 << 0)    /* Master mode */
-
-/* SECTION: GPIO SCCB */
-#if defined(MINISTM32_USING_GPIO_SCCB)
-#define GPIO_SCCB_NAME                  "io_sccb"
-#define GPIO_SCCB_SCCB_MODE             (MINISTM32_SCCB_MASTER)
-#define GPIO_SCCB_FREQUENCY             (1000000)    /* Max 1MHz */
-#define GPIO_SCCB_SCL_CLOCK             (RCC_APB2Periph_GPIOC)
-#define GPIO_SCCB_SCL_PORT              (GPIOC)
-#define GPIO_SCCB_SCL_PIN               (GPIO_Pin_11)
-#define GPIO_SCCB_SDA_CLOCK             (RCC_APB2Periph_GPIOC)
-#define GPIO_SCCB_SDA_PORT              (GPIOC)
-#define GPIO_SCCB_SDA_PIN               (GPIO_Pin_12)
-#endif
-
-
-/* SECTION: USB */
-#if defined(MINISTM32_USING_USB)
-#define USB_NAME                        "usb"
+/* SECTION: LED */
+#if defined(BOARD_USING_LED1)
+#define LED1_NAME                  		"led1"
+#define LED1_CLOCK             			(RCC_APB2Periph_GPIOB)
+#define LED1_PORT              			(GPIOB)
+#define LED1_PIN               			(GPIO_Pin_5)
 #endif
 
 
@@ -253,25 +192,30 @@
 #define FINSH_USING_DESCRIPTION
 
 
-/* SECTION: RTGUI support */
-#if defined(MINISTM32_USING_LCD)
-#define LCD_DEVICE_NAME                 "lcd"
-#define MINISTM32_DISPLAY_NAME          LCD_DEVICE_NAME
-#endif
+/* OLED options */
+//#define INTERFACE_IIC                   (1 << 0)    /* IIC */
+//#define INTERFACE_3WIRE_SPI             (1 << 1)    /* 3-wire SPI */
+#define INTERFACE_4WIRE_SPI             (1 << 3)    /* 4-wire SPI */
+//#define INTERFACE_8BIT_68XX             (1 << 4)    /* 8-bit 68xx parallel */
+#define INTERFACE_8BIT_80XX             (1 << 5)    /* 8-bit 80xx parallel */
 
-#if defined(MINISTM32_USING_OLED)
+/* SECTION: OLED */
+#if defined(BOARD_USING_OLED)
+#define OLED_USING_DEVICE_NAME          SPI2_NAME
 #define OLED_DEVICE_NAME                "oled"
-#define MINISTM32_DISPLAY_NAME          OLED_DEVICE_NAME
+#define OLED_DEVICE_INTERFACE           INTERFACE_4WIRE_SPI
+#define BOARD_DISPLAY_NAME              OLED_DEVICE_NAME
 #endif
 
-#if (defined(MINISTM32_USING_LCD) || defined(MINISTM32_USING_OLED) || defined(MINISTM32_USING_DOU))
+/* SECTION: RTGUI support */
+#if defined(BOARD_USING_OLED)
 /* using RTGUI support */
 #define RT_USING_RTGUI
 
 /* name length of RTGUI object */
 #define RTGUI_NAME_MAX                  (16)
 /* support 16 weight font */
-#define RTGUI_USING_FONT16
+//#define RTGUI_USING_FONT16
 /* support 12 weight font */
 #define RTGUI_USING_FONT12
 /* support Chinese font */
@@ -291,50 +235,36 @@
 /* RTGUI image options */
 //#define RTGUI_IMAGE_XPM
 //#define RTGUI_IMAGE_JPEG
-#define RTGUI_IMAGE_TJPGD
+//#define RTGUI_IMAGE_TJPGD
 //#define RTGUI_IMAGE_PNG
-#define RTGUI_IMAGE_BMP
-#endif /* defined(MINISTM32_USING_LCD) || defined(MINISTM32_USING_OLED) || defined(MINISTM32_USING_DOU) */
-
-#if defined(MINISTM32_USING_TOUCH)
-#define TOUCH_USING_DEVICE_NAME         GPIO_SPI1_NAME
-#define TOUCH_DEVICE_NAME               "touch"
-#endif /* defined(MINISTM32_USING_TOUCH) */
-
-#if defined(MINISTM32_USING_DOU)
-#define DOU_USING_DEVICE_NAME           USART3_NAME
-#define DOU_DEVICE_NAME                 "dou"
-#define MINISTM32_DISPLAY_NAME          DOU_DEVICE_NAME
-#endif /* defined(MINISTM32_USING_DOU) */
-
-#if defined(MINISTM32_USING_CAMERA)
-#define CAMERA_USING_DEVICE_NAME        GPIO_SCCB_NAME
-#define CAMERA_DEVICE_NAME              "camera"
-#define CAMERA_USING_DISPLAY_NAME       MINISTM32_DISPLAY_NAME
-#endif /* defined(MINISTM32_USING_CAMERA) */
+//#define RTGUI_IMAGE_BMP
+#endif /* defined(BOARD_USING_OLED) */
 
 
 /* SECTION: device filesystem */
-#if (defined(RT_USING_NEWLIB) || defined(MINISTM32_USING_SPISD) || defined(RT_USING_RTGUI))
-//#define RT_USING_DFS
+#if (defined(RT_USING_NEWLIB) || defined(BOARD_USING_SPISD) || defined(RT_USING_RTGUI))
+#define RT_USING_DFS
 /* the max number of mounted filesystem */
 #define DFS_FILESYSTEMS_MAX             (2)
 /* the max number of opened files 		*/
 #define DFS_FD_MAX                      (4)
 /* the max number of cached sector 		*/
 #define DFS_CACHE_MAX_NUM               (4)
-#endif /* defined(RT_USING_NEWLIB) || defined(MINISTM32_USING_SPISD) */
-#if defined(MINISTM32_USING_SPISD)
-#define SPISD_USING_DEVICE_NAME         SPI1_NAME
+#endif /* defined(RT_USING_NEWLIB) || defined(BOARD_USING_SPISD) || defined(RT_USING_RTGUI) */
+
+#if defined(BOARD_USING_SPISD)
+#define SPISD_USING_DEVICE_NAME         SPI2_NAME
 #define SPISD_DEVICE_NAME               "spiSd"
 
-//#define RT_USING_DFS_ELMFAT
+#define RT_USING_DFS_ELMFAT
 #define DFS_ELMFAT_INTERFACE_EFM
-#endif /* defined(MINISTM32_USING_SPISD) */
+#endif /* defined(BOARD_USING_SPISD) */
+
 #if defined(RT_USING_NEWLIB)
 //#define RT_USING_DFS_DEVFS
 #endif /* defined(RT_USING_NEWLIB) */
 
+#if defined(RT_USING_DFS)
 //#define RT_DFS_ELM_WORD_ACCESS
 /* Reentrancy (thread safe) of the FatFs module.  */
 //#define RT_DFS_ELM_REENTRANT
@@ -343,7 +273,8 @@
 /* #define RT_DFS_ELM_USE_LFN			(1) */
 //#define RT_DFS_ELM_MAX_LFN			(255)
 /* Maximum sector size to be handled. */
-//#define RT_DFS_ELM_MAX_SECTOR_SIZE  (512)
+#define RT_DFS_ELM_MAX_SECTOR_SIZE      (2048)  // 512: 0~2GB
+#endif /* defined(RT_USING_DFS) */
 
 
 /* SECTION: LWIP */
@@ -398,6 +329,11 @@
 #define RT_LWIP_ETHTHREAD_STACKSIZE	    (512)
 #endif /* defined(EFM32_USING_ETHERNET) */
 
+
+/* SECTION: LUA */
+//#define RT_USING_LIBC
+//#define RT_USING_LUA
+//#define RT_LUA_OPTRAM
 
 /* Exported functions ------------------------------------------------------- */
 

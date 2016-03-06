@@ -90,7 +90,7 @@ elif PLATFORM == 'iar':
     LINK = 'ilinkarm'
     TARGET_EXT = 'out'
 
-    DEVICE = ' -D USE_STDPERIPH_DRIVER' + ' -D STM32F10X_HD'
+    DEVICE = ' -D USE_STDPERIPH_DRIVER' + ' -D ' + STM32_TYPE
 
     CFLAGS = DEVICE
     CFLAGS += ' --diag_suppress Pa050'

@@ -116,41 +116,21 @@ void rt_hw_driver_init(void)
     miniStm32_hw_spi_init();
 #endif
 
-    /* Initialize GPIO SPI */
-#if (defined(MINISTM32_USING_GPIO_SPI1) || defined(MINISTM32_USING_GPIO_SPI2))
-    miniStm32_hw_gpio_spi_init();
-#endif
-
-    /* Initialize GPIO SCCB */
-#if defined(MINISTM32_USING_GPIO_SCCB)
-    miniStm32_hw_gpio_sccb_init();
-#endif
-
-    /* Initialize LCD */
-#if defined(MINISTM32_USING_LCD)
-    miniStm32_hw_lcd_init();
+    /* Initialize LED */
+#if (defined(BOARD_USING_LED1) || defined(BOARD_USING_LED2))
+	board_hw_led_init();
 #endif
 
     /* Initialize OLED */
-#if defined(MINISTM32_USING_OLED)
+#if defined(BOARD_USING_OLED)
+#if (OLED_DEVICE_INTERFACE == INTERFACE_8BIT_80XX)
     miniStm32_hw_oled_init();
+#endif
 #endif
 
     /* Initialize RTC */
 #if defined(MINISTM32_USING_RTC)
     miniStm32_hw_rtc_init();
-#endif
-
-    /* Initialize USB */
-#if defined(MINISTM32_USING_USB)
-    miniStm32_hw_usb_core_init();
-
- #if defined(MINISTM32_USING_USB_VIRTUAL_COM)
-    miniStm32_hw_usb_com_init();
- #endif
- #if defined(MINISTM32_USING_USB_HID_MOUSE)
-    miniStm32_hw_usb_mouse_init();
- #endif
 #endif
 }
 
@@ -165,27 +145,16 @@ void rt_hw_driver_init(void)
  ******************************************************************************/
 void rt_hw_driver2_init(void)
 {
+    /* Initialize OLED 2 */
+#if defined(BOARD_USING_OLED)
+#if (OLED_DEVICE_INTERFACE == INTERFACE_4WIRE_SPI)
+    miniStm32_hw_oled_init();
+#endif
+#endif
+
     /* Initialize SD card */
-#if defined(MINISTM32_USING_SPISD)
+#if defined(BOARD_USING_SPISD)
 //    miniStm32_hw_spiSd_init();
-#endif
-
-    /* Initialize touch screen */
-#if defined(MINISTM32_USING_TOUCH)
-    miniStm32_hw_touch_init();
-#endif
-
-#if defined(MINISTM32_USING_IR)
-    miniStm32_hw_ir_init();
-#endif
-
-#if defined(MINISTM32_USING_CAMERA)
-    miniStm32_hw_camera_init();
-#endif
-
-    /* Initialize DOU */
-#if defined(MINISTM32_USING_DOU)
-    miniStm32_hw_dou_init();
 #endif
 }
 

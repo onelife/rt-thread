@@ -13,7 +13,7 @@
  * Date			Author		Notes
  * 2012-01-24   onelife     Initial creation of SD card driver (through SPI) for
  *  MiniSTM32 (Modified from EFN32 branch)
-s ******************************************************************************/
+ ******************************************************************************/
 #ifndef __DRV_SDCARD_H__
 #define __DRV_SDCARD_H__
 
@@ -22,7 +22,7 @@ s ******************************************************************************
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 #define MINISTM32_SDCLK_LOW     (SPI_BaudRatePrescaler_64)
-#define MINISTM32_SDCLK_HIGH    (SPI_BaudRatePrescaler_4)
+#define MINISTM32_SDCLK_HIGH    (SPI_BaudRatePrescaler_2)
 
 #define SD_INIT_RETRY_TIMES     (5)
 

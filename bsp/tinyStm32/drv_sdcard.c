@@ -25,7 +25,7 @@
 #include "drv_spi.h"
 #include "drv_sdcard.h"
 
-#if defined(MINISTM32_USING_SPISD)
+#if defined(BOARD_USING_SPISD)
 #include <dfs_fs.h>
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,7 +43,6 @@ static struct rt_device     sd_dev;
 static struct dfs_partition sdPart;
 static rt_device_t          spi_dev         = RT_NULL;
 static rt_uint16_t          sdType;
-static rt_bool_t            sdAutoCs        = RT_TRUE;
 static rt_timer_t           sdTimer         = RT_NULL;
 static volatile rt_bool_t   sdInTime        = RT_TRUE;
 
@@ -76,22 +75,10 @@ static void miniStm32_spiSd_timer(void* parameter)
  * @param[in] enable
  *  Chip select pin setting
  ******************************************************************************/
-rt_inline void miniStm32_spiSd_cs(rt_uint8_t enable)
-{
-    if (!sdAutoCs)
-    {
-        if (enable)
-        {
-//            GPIO_ResetBits(SD_CS_PORT, SD_CS_PIN);
-            SD_CS_PORT->BRR = SD_CS_PIN;
-        }
-        else
-        {
-//            GPIO_SetBits(SD_CS_PORT, SD_CS_PIN);
-            SD_CS_PORT->BSRR = SD_CS_PIN;
-        }
-    }
-}
+#if (defined(SD_CS_PORT) && defined(SD_CS_PIN))
+    #define miniStm32_spiSd_cs(enable)  if (enable) SD_CS_PORT->BRR = SD_CS_PIN; else SD_CS_PORT->BSRR = SD_CS_PIN;
+#endif
+
 
 /***************************************************************************//**
  * @brief
@@ -109,17 +96,9 @@ static void miniStm32_spiSd_speed(rt_uint8_t level)
     RT_ASSERT(spi_dev != RT_NULL);
 
     struct miniStm32_spi_device *spi;
-    rt_uint16_t prescaler;
+    rt_uint16_t prescaler = (level == SD_SPEED_HIGH)? MINISTM32_SDCLK_HIGH : MINISTM32_SDCLK_LOW;
 
     spi = (struct miniStm32_spi_device *)(spi_dev->user_data);
-    if (level == SD_SPEED_HIGH)
-    {
-        prescaler = MINISTM32_SDCLK_HIGH;
-    }
-    else
-    {
-        prescaler = MINISTM32_SDCLK_LOW;
-    }
     spi->spi_device->CR1 &= ~0x0038;
     spi->spi_device->CR1 |= prescaler;
 }
@@ -663,8 +642,8 @@ static rt_err_t rt_spiSd_init(rt_device_t dev)
         /* Switch to low speed */
         miniStm32_spiSd_speed(SD_SPEED_LOW);
 
-        /* 80 dummy clocks */
-        miniStm32_spiSd_read(RT_NULL, 80);
+        /* >74 dummy clocks */
+        rt_device_control(spi_dev, RT_DEVICE_CTRL_SPI_OUTPUT_CLOCK, (void *)10);
         /* Enter Idle state */
         while (retry && (miniStm32_spiSd_sendCmd(CMD0, 0x00000000, MINISTM32_NO_POINTER) != 0x01))
         {
@@ -1225,8 +1204,6 @@ static rt_err_t rt_spiSd_control (
 ******************************************************************************/
 rt_err_t miniStm32_hw_spiSd_init(void)
 {
-    struct miniStm32_spi_device *spi;
-
     do
     {
         /* Find SPI device */
@@ -1239,20 +1216,19 @@ rt_err_t miniStm32_hw_spiSd_init(void)
         }
         sdcard_debug("SPISD: Find device %s\n", SPISD_USING_DEVICE_NAME);
 
+#if (defined(SD_CS_PORT) && defined(SD_CS_PIN))
         /* Config chip slect pin */
-        spi = (struct miniStm32_spi_device *)(spi_dev->user_data);
-        if (!(spi->status & SPI_STATUS_AUTOCS))
         {
             GPIO_InitTypeDef gpio_init;
 
+            RCC_APB2PeriphClockCmd(SD_CS_CLOCK, ENABLE);
             gpio_init.GPIO_Pin          = SD_CS_PIN;
             gpio_init.GPIO_Speed        = GPIO_Speed_50MHz;
             gpio_init.GPIO_Mode         = GPIO_Mode_Out_PP;
             GPIO_Init(SD_CS_PORT, &gpio_init);
             GPIO_SetBits(SD_CS_PORT, SD_CS_PIN);
-            sdAutoCs = RT_FALSE;
         }
-
+#endif
         /* Register SPI SD device */
         sd_dev.type      = RT_Device_Class_MTD;
         sd_dev.init      = rt_spiSd_init;
@@ -1262,11 +1238,14 @@ rt_err_t miniStm32_hw_spiSd_init(void)
         sd_dev.write     = rt_spiSd_write;
         sd_dev.control   = rt_spiSd_control;
         sd_dev.user_data = RT_NULL;
-        rt_device_register(
+        if (rt_device_register(
             &sd_dev,
             SPISD_DEVICE_NAME,
-            RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_REMOVABLE | RT_DEVICE_FLAG_STANDALONE);
-
+            RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_REMOVABLE | RT_DEVICE_FLAG_STANDALONE
+            ) != RT_EOK)
+        {
+            break;
+        }
         sdcard_debug("SPISD: HW init OK\n");
         return RT_EOK;
     } while (0);
@@ -1318,6 +1297,10 @@ void list_sd(void)
     {
         rt_kprintf("%s\n", "SDHC");
     }
+	else
+	{
+		rt_kprintf("0x%x\n", buf_res[0]);
+	}
     sd_dev.control(&sd_dev, RT_DEVICE_CTRL_SD_GET_SSIZE, &temp16);
     sd_dev.control(&sd_dev, RT_DEVICE_CTRL_SD_GET_SCOUNT, &temp32);
     capacity = ((temp32 & 0x0000FFFF) * temp16) >> 16;
@@ -1328,7 +1311,7 @@ void list_sd(void)
 FINSH_FUNCTION_EXPORT(list_sd, list the SD card.)
 #endif
 
-#endif /* defined(MINISTM32_USING_SPISD) */
+#endif /* defined(BOARD_USING_SPISD) */
 /***************************************************************************//**
  * @}
  ******************************************************************************/

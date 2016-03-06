@@ -64,21 +64,21 @@
 /* Private variables ---------------------------------------------------------*/
 static struct miniStm32_spi_task_struct *spi_tasks[3];
 
-#if (defined(SPI1) || defined(MINISTM32_USING_SPI1))
+#if (defined(RCC_APB2ENR_SPI1EN) || defined(MINISTM32_USING_SPI1))
 static struct miniStm32_spi_unit_struct spi1;
  #if (SPI1_SPI_MODE & SPI_CONFIG_DMA_TX)
  static struct miniStm32_spi_dma_mode spi1_dma_tx;
  #endif
 #endif
 
-#if (defined(SPI2) || defined(MINISTM32_USING_SPI2))
+#if (defined(RCC_APB1ENR_SPI2EN) || defined(MINISTM32_USING_SPI2))
 static struct miniStm32_spi_unit_struct spi2;
  #if (SPI2_SPI_MODE & SPI_CONFIG_DMA_TX)
  static struct miniStm32_spi_dma_mode spi2_dma_tx;
  #endif
 #endif
 
-#if (defined(SPI3) || defined(MINISTM32_USING_SPI3))
+#if (defined(RCC_APB1ENR_SPI3EN) || defined(MINISTM32_USING_SPI3))
 static struct miniStm32_spi_unit_struct spi3;
  #if (SPI3_SPI_MODE & SPI_CONFIG_DMA_TX)
  static struct miniStm32_spi_dma_mode spi3_dma_tx;
@@ -102,44 +102,44 @@ void miniStm32_spi_dma_tx_isr(rt_device_t dev)
 {
     struct miniStm32_spi_device *spi;
     struct miniStm32_spi_dma_mode *dma_tx;
-	struct miniStm32_spi_dma_node *dma_node;
-	rt_uint32_t level;
+    struct miniStm32_spi_dma_node *dma_node;
+    rt_uint32_t level;
 
     spi = (struct miniStm32_spi_device *)dev->user_data;
     dma_tx = (struct miniStm32_spi_dma_mode *)spi->tx_mode;
-	dma_node = dma_tx->list_head;
+    dma_node = dma_tx->list_head;
 
-    RT_ASSERT(!(dev->flag & RT_DEVICE_FLAG_DMA_TX) && (dma_node != RT_NULL));
+    RT_ASSERT((dev->flag & RT_DEVICE_FLAG_DMA_TX) && (dma_node != RT_NULL));
 
-	/* Invoke call to notify tx complete */
-	if (dev->tx_complete != RT_NULL)
-	{
-		dev->tx_complete(dev, dma_node->data_ptr);
-	}
+    /* Invoke call to notify tx complete */
+    if (dev->tx_complete != RT_NULL)
+    {
+        dev->tx_complete(dev, dma_node->data_ptr);
+    }
 
-	/* Remove the node */
-	level = rt_hw_interrupt_disable();
-	dma_tx->list_head = dma_node->next;
-	if (dma_tx->list_head == RT_NULL)  /* data link empty */
-	{
-		dma_tx->list_tail = RT_NULL;
-	}
-	rt_hw_interrupt_enable(level);
+    /* Remove the node */
+    level = rt_hw_interrupt_disable();
+    dma_tx->list_head = dma_node->next;
+    if (dma_tx->list_head == RT_NULL)  /* data link empty */
+    {
+        dma_tx->list_tail = RT_NULL;
+    }
+    rt_hw_interrupt_enable(level);
 
-	/* Release the node */
-	rt_mp_free(dma_node);
+    /* Release the node */
+    rt_mp_free(dma_node);
 
     SPI_I2S_DMACmd(spi->spi_device, SPI_I2S_DMAReq_Tx, DISABLE);
     DMA_Cmd(dma_tx->dma_chn, DISABLE);
 
-	if (dma_tx->list_head != RT_NULL)
-	{
+    if (dma_tx->list_head != RT_NULL)
+    {
         /* Enable DMA TX */
         dma_tx->dma_chn->CMAR = (rt_uint32_t)dma_tx->list_head->data_ptr;
         dma_tx->dma_chn->CNDTR = (rt_uint32_t)dma_tx->list_head->data_size;
         DMA_Cmd(dma_tx->dma_chn, ENABLE);
         SPI_I2S_DMACmd(spi->spi_device, SPI_I2S_DMAReq_Tx, ENABLE);
-	}
+    }
     else
     {
         /* Reset status */
@@ -502,7 +502,7 @@ static void spi_task_write(struct miniStm32_spi_unit_struct *cfg,
 
     ptr = tx_buf;
     len = exec_msg->cmd.size;
-    spi_debug("SPI: TX DATA (%d)\n", cfg->spi.number, len);
+    spi_debug("SPI%d: TX DATA (%d)\n", cfg->spi.number, len);
     /* Write data */
     if (cfg->device.flag & RT_DEVICE_FLAG_STREAM)
     {
@@ -514,7 +514,7 @@ static void spi_task_write(struct miniStm32_spi_unit_struct *cfg,
         }
     }
     if ((cfg->spi.status & SPI_STATUS_START) && \
-        (cfg->device.flag & RT_DEVICE_FLAG_DMA_TX) && (len > 2))
+        (cfg->device.flag & RT_DEVICE_FLAG_DMA_TX) && (len > 8))
     {
         /* DMA mode */
         spi_debug("SPI%d: DMA TX DATA\n", cfg->spi.number);
@@ -531,7 +531,7 @@ static void spi_task_write(struct miniStm32_spi_unit_struct *cfg,
     else
     {
         /* polling mode */
-		spi_debug("SPI%d: Polling TX DATA\n", cfg->spi.number);
+        spi_debug("SPI%d: Polling TX DATA\n", cfg->spi.number);
         while (len)
         {
             while (!(cfg->spi.spi_device->SR & SPI_I2S_FLAG_TXE));
@@ -573,10 +573,23 @@ static void spi_task_control(struct miniStm32_spi_unit_struct *cfg,
         cfg->spi.status |= (rt_uint16_t)SPI_STATUS_NONBLOCKING;
         break;
 
-    case RT_DEVICE_CTRL_SPI_RX_BUFFER:
+    case RT_DEVICE_CTRL_SPI_OUTPUT_CLOCK:
         /* Set RX buffer */
         {
-            // TODO:
+            rt_uint32_t len = (rt_uint32_t)exec_msg->cmd.ptr;
+
+            /* Flushing RX */
+            *(rt_uint16_t *)0x00 = cfg->spi.spi_device->DR;
+
+            while (len)
+            {
+                /* dummy write */
+                while (!(cfg->spi.spi_device->SR & SPI_I2S_FLAG_TXE));
+                cfg->spi.spi_device->DR = 0x00ff;
+                /* Flushing RX */
+                *(rt_uint16_t *)0x00 = cfg->spi.spi_device->DR;
+                len--;
+            }
         }
         break;
     }
@@ -617,19 +630,19 @@ void spi_task_main_loop(void *parameter)
     cfg = (struct miniStm32_spi_unit_struct *)parameter;
     self = rt_thread_self();
 
-	if (rt_mq_init(
+    if (rt_mq_init(
         &cfg->task.rx_msgs,
         &self->name[0],
         (void *)&cfg->task.rx_msg_pool,
         SPI_RX_MESSAGE_SIZE,
-		sizeof(cfg->task.rx_msg_pool),
-		RT_IPC_FLAG_FIFO) != RT_EOK)
-	{
+        sizeof(cfg->task.rx_msg_pool),
+        RT_IPC_FLAG_FIFO) != RT_EOK)
+    {
         rt_kprintf("SPI%d: init mq failed!\n", cfg->spi.number);
         return;
-	}
+    }
 
-	if (rt_event_init(
+    if (rt_event_init(
         &cfg->task.tx_evts,
         &self->name[0],
         RT_IPC_FLAG_FIFO) != RT_EOK)
@@ -649,14 +662,14 @@ SPI_MAIN_LOOP:
     while ((cfg->device.flag & RT_DEVICE_FLAG_ACTIVATED) && \
         !(cfg->device.flag & RT_DEVICE_FLAG_SUSPENDED))
     {
-		if(rt_mq_recv(
+        if(rt_mq_recv(
             &cfg->task.rx_msgs,
             (void *)&p_exec_msg,
             SPI_RX_MESSAGE_SIZE,
             RT_WAITING_FOREVER) != RT_EOK)
-		{
+        {
             continue;
-		}
+        }
 
         chk_block = RT_FALSE;
         switch (p_exec_msg->cmd.cmd)
@@ -762,13 +775,17 @@ static rt_err_t miniStm32_spi_open(rt_device_t dev, rt_uint16_t oflag)
             cfg = &spi1;
             break;
 
+#if defined(RCC_APB1ENR_SPI2EN)
         case 2:
             cfg = &spi2;
             break;
+#endif
 
+#if defined(RCC_APB1ENR_SPI3EN)
         case 3:
             cfg = &spi3;
             break;
+#endif
         }
 
         spi_task_open(cfg, &exec_msg);
@@ -811,13 +828,17 @@ static rt_err_t miniStm32_spi_close(rt_device_t dev)
             cfg = &spi1;
             break;
 
+#if defined(RCC_APB1ENR_SPI2EN)
         case 2:
             cfg = &spi2;
             break;
+#endif
 
+#if defined(RCC_APB1ENR_SPI3EN)
         case 3:
             cfg = &spi3;
             break;
+#endif
         }
 
         spi_task_close(cfg, &exec_msg);
@@ -878,13 +899,17 @@ static rt_size_t miniStm32_spi_read (
             cfg = &spi1;
             break;
 
+#if defined(RCC_APB1ENR_SPI2EN)
         case 2:
             cfg = &spi2;
             break;
+#endif
 
+#if defined(RCC_APB1ENR_SPI3EN)
         case 3:
             cfg = &spi3;
             break;
+#endif
         }
 
         while(cfg->spi.status & SPI_STATUS_RX_BUSY);
@@ -1032,13 +1057,17 @@ static rt_size_t miniStm32_spi_write (
             cfg = &spi1;
             break;
 
+#if defined(RCC_APB1ENR_SPI2EN)
         case 2:
             cfg = &spi2;
             break;
+#endif
 
+#if defined(RCC_APB1ENR_SPI3EN)
         case 3:
             cfg = &spi3;
             break;
+#endif
         }
 
         while(cfg->spi.status & SPI_STATUS_RX_BUSY);
@@ -1180,13 +1209,17 @@ static rt_err_t miniStm32_spi_control (
             cfg = &spi1;
             break;
 
+#if defined(RCC_APB1ENR_SPI2EN)
         case 2:
             cfg = &spi2;
             break;
+#endif
 
+#if defined(RCC_APB1ENR_SPI3EN)
         case 3:
             cfg = &spi3;
             break;
+#endif
         }
 
         spi_task_control(cfg, &exec_msg);
@@ -1259,7 +1292,7 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
     DMA_InitTypeDef     dma_init;
     NVIC_InitTypeDef    nvic_init;
     GPIO_TypeDef        *port_spi, *port_cs;
-    rt_uint16_t         pin_spi, pin_cs;
+    rt_uint16_t         pin_sck, pin_mosi, pin_miso, pin_cs;
     rt_uint32_t         tx_irq;
     rt_uint8_t          tx_chn;
     miniStm32_irq_hook_init_t hook;
@@ -1296,7 +1329,9 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
                         RCC_APB2Periph_SPI1 | RCC_APB2Periph_AFIO), ENABLE);
                     GPIO_PinRemapConfig(GPIO_Remap_SPI1, ENABLE);
                     port_spi        = GPIOB;
-                    pin_spi         = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5;
+                    pin_sck         = GPIO_Pin_3;
+                    pin_mosi        = GPIO_Pin_5;
+                    pin_miso        = GPIO_Pin_4;
                     port_cs         = GPIOA;
                     pin_cs          = GPIO_Pin_15;
                 }
@@ -1305,7 +1340,9 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
                     RCC_APB2PeriphClockCmd((RCC_APB2Periph_GPIOA | \
                         RCC_APB2Periph_SPI1), ENABLE);
                     port_spi        = GPIOA;
-                    pin_spi         = GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;
+                    pin_sck         = GPIO_Pin_5;
+                    pin_mosi        = GPIO_Pin_7;
+                    pin_miso        = GPIO_Pin_6;
                     port_cs         = GPIOA;
                     pin_cs          = GPIO_Pin_4;
                 }
@@ -1319,7 +1356,7 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
                 }
             }
             break;
-#if defined(SPI2)
+#if defined(RCC_APB1ENR_SPI2EN)
         case 2:
             {
                 spi->spi_device     = SPI2;
@@ -1328,7 +1365,9 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
                 RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
                 /* Pre-config GPIO */
                 port_spi            = GPIOB;
-                pin_spi             = GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+                pin_sck             = GPIO_Pin_13;
+                pin_mosi            = GPIO_Pin_15;
+                pin_miso            = GPIO_Pin_14;
                 port_cs             = GPIOB;
                 pin_cs              = GPIO_Pin_12;
                 /* Pre-config DMA */
@@ -1342,7 +1381,7 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
             }
             break;
 #endif
-#if defined(SPI3)
+#if defined(RCC_APB1ENR_SPI3EN)
         case 3:
             {
                 spi->spi_device     = SPI3;
@@ -1354,7 +1393,9 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
                     RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE);
                     GPIO_PinRemapConfig(GPIO_Remap_SPI3, ENABLE);
                     port_spi        = GPIOC;
-                    pin_spi         = GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12;
+                    pin_sck         = GPIO_Pin_10;
+                    pin_mosi        = GPIO_Pin_12;
+                    pin_miso        = GPIO_Pin_11;
                     port_cs         = GPIOA;
                     pin_cs          = GPIO_Pin_4;
                 }
@@ -1363,7 +1404,9 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
                     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
                     RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE);
                     port_spi        = GPIOB;
-                    pin_spi         = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5;
+                    pin_sck         = GPIO_Pin_3;
+                    pin_mosi        = GPIO_Pin_5;
+                    pin_miso        = GPIO_Pin_4;
                     port_cs         = GPIOA;
                     pin_cs          = GPIO_Pin_15;
                 }
@@ -1383,14 +1426,42 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
         }
 
         /* Config GPIO */
-        gpio_init.GPIO_Pin      = pin_spi;
-        gpio_init.GPIO_Speed    = GPIO_Speed_50MHz;
-        gpio_init.GPIO_Mode     = GPIO_Mode_AF_PP;
-        GPIO_Init(port_spi, &gpio_init);
-        if (init->config & SPI_CONFIG_AUTOCS)
+        gpio_init.GPIO_Speed        = GPIO_Speed_50MHz;
+        if (init->config & SPI_CONFIG_MASTER)
         {
-            gpio_init.GPIO_Pin  = pin_cs;
-            GPIO_Init(port_cs, &gpio_init);
+            /* Master clock */
+            gpio_init.GPIO_Pin      = pin_sck;
+            gpio_init.GPIO_Mode     = GPIO_Mode_AF_PP;
+            GPIO_Init(port_spi, &gpio_init);
+            /* Master output */
+            gpio_init.GPIO_Pin      = pin_mosi;
+            gpio_init.GPIO_Mode     = GPIO_Mode_AF_PP;
+            GPIO_Init(port_spi, &gpio_init);
+            /* Master input */
+            gpio_init.GPIO_Pin      = pin_miso;
+            gpio_init.GPIO_Mode     = GPIO_Mode_IPU;    // TODO: Input floating / Input pull-up
+            GPIO_Init(port_spi, &gpio_init);
+            if (init->config & SPI_CONFIG_AUTOCS)
+            {
+                gpio_init.GPIO_Pin  = pin_cs;
+                gpio_init.GPIO_Mode = GPIO_Mode_AF_PP;
+                GPIO_Init(port_cs, &gpio_init);
+            }
+        }
+        else
+        {
+            /* Slave clock */
+            gpio_init.GPIO_Pin      = pin_sck;
+            gpio_init.GPIO_Mode     = GPIO_Mode_IN_FLOATING;
+            GPIO_Init(port_spi, &gpio_init);
+            /* Slave input */
+            gpio_init.GPIO_Pin      = pin_mosi;
+            gpio_init.GPIO_Mode     = GPIO_Mode_IPU;    // TODO: Input floating / Input pull-up
+            GPIO_Init(port_spi, &gpio_init);
+            /* Slave output */
+            gpio_init.GPIO_Pin      = pin_miso;
+            gpio_init.GPIO_Mode     = GPIO_Mode_AF_PP;  // TODO: multi-slave -> open drain
+            GPIO_Init(port_spi, &gpio_init);
         }
 
         /* Init SPI unit */
@@ -1557,7 +1628,7 @@ rt_err_t miniStm32_hw_spi_init(void)
 
     do
     {
-#if (defined(SPI1) && defined(MINISTM32_USING_SPI1))
+#if (defined(RCC_APB2ENR_SPI1EN) && defined(MINISTM32_USING_SPI1))
         const rt_uint8_t name[] = SPI1_NAME;
 
         spi_tasks[0]        = &spi1.task;
@@ -1588,7 +1659,7 @@ rt_err_t miniStm32_hw_spi_init(void)
         }
 #endif
 
-#if (defined(SPI2) && defined(MINISTM32_USING_SPI2))
+#if (defined(RCC_APB1ENR_SPI2EN) && defined(MINISTM32_USING_SPI2))
         const rt_uint8_t name[] = SPI2_NAME;
 
         spi_tasks[1]        = &spi2.task;
@@ -1619,7 +1690,7 @@ rt_err_t miniStm32_hw_spi_init(void)
         }
 #endif
 
-#if (defined(SPI3) && defined(MINISTM32_USING_SPI3))
+#if (defined(RCC_APB1ENR_SPI3EN) && defined(MINISTM32_USING_SPI3))
         const rt_uint8_t name[] = SPI3_NAME;
 
         spi_tasks[2]        = &spi3.task;

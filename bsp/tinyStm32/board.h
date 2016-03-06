@@ -46,10 +46,21 @@
 /* SECTION: SPI */
 #define SPI_RX_BUFFER_SIZE		        (64)
 
+/* SECTION: OLED */
+#if defined(BOARD_USING_OLED)
+#define OLED_CS_CLOCK                   (RCC_APB2Periph_GPIOB)
+#define OLED_CS_PORT                    (GPIOB)
+#define OLED_CS_PIN                     (GPIO_Pin_12)
+#define OLED_DC_CLOCK                   (RCC_APB2Periph_GPIOB)
+#define OLED_DC_PORT                    (GPIOB)
+#define OLED_DC_PIN                     (GPIO_Pin_14)
+#endif
+
 /* SECTION: Micro SD */
-#if defined(MINISTM32_USING_SPISD)
-#define SD_CS_PORT                      (GPIOA)
-#define SD_CS_PIN                       (GPIO_Pin_3)
+#if defined(BOARD_USING_SPISD)
+#define SD_CS_CLOCK                     (RCC_APB2Periph_GPIOB)
+#define SD_CS_PORT                      (GPIOB)
+#define SD_CS_PIN                       (GPIO_Pin_0)
 #endif
 
 
@@ -79,7 +90,7 @@
 /*! fixme: The following defines should be moved to Rtdef.h */
 #define RT_DEVICE_CTRL_MODE_BLOCKING        (0xF1)      /*!< Blocking mode operatrion */
 #define RT_DEVICE_CTRL_MODE_NONBLOCKING     (0xF2)      /*!< Non-blocking mode operatrion */
-#define RT_DEVICE_CTRL_SPI_RX_BUFFER        (0xF3)      /*!< Set SPI rx buffer */
+#define RT_DEVICE_CTRL_SPI_OUTPUT_CLOCK     (0xF3)      /*!< Output SPI clock */
 #define RT_DEVICE_CTRL_USART_RX_BUFFER      (0xF4)      /*!< Set USART rx buffer */
 #define RTGRAPHIC_CTRL_LCD_CALIBRATION      (0xF5)      /*!< Touch screen calibration support in LCD driver */
 #define RTGRAPHIC_CTRL_TOUCH_CALIBRATION    (0xF6)      /*!< Touch screen calibration support in touch screen driver */
@@ -100,8 +111,6 @@
 #endif
 
 /* Exported functions ------------------------------------------------------- */
-void rt_hw_board_led_on(int n);
-void rt_hw_board_led_off(int n);
 void rt_hw_board_init(void);
 void rt_hw_driver_init(void);
 void rt_hw_driver2_init(void);
