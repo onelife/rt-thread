@@ -1,7 +1,9 @@
+import os
+
 # toolchains options
-ARCH='arm'
-CPU='cortex-m3'
-CROSS_TOOL='gcc'
+ARCH = 'arm'
+CPU = 'cortex-m3'
+CROSS_TOOL = os.getenv('RTT_CC', 'gcc')
 
 #device options
 # STM32_TYPE =
@@ -17,7 +19,7 @@ STM32_USB_LIB = False
 
 if  CROSS_TOOL == 'gcc':
 	PLATFORM 	= 'gcc'
-	EXEC_PATH   = 'C:/Users/Gang/Tools/Sourcery_CodeBench_Lite_for_ARM_EABI/bin'
+	EXEC_PATH   = os.getenv('RTT_EXEC_PATH', 'C:/Users/Gang/Tools/Sourcery_CodeBench_Lite_for_ARM_EABI/bin')
 elif CROSS_TOOL == 'keil':
 	PLATFORM 	= 'armcc'
 	EXEC_PATH 	= 'E:/Keil'
