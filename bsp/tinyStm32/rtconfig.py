@@ -15,7 +15,10 @@ STM32_USB_LIB = False
 # cross_tool provides the cross compiler
 # EXEC_PATH is the compiler execute path, for example, CodeSourcery, Keil MDK, IAR
 
-if  CROSS_TOOL == 'gcc':
+if CROSS_TOOL == 'docker':
+	PLATFORM 	= 'gcc'
+	EXEC_PATH   = '/usr/bin'
+elif CROSS_TOOL == 'gcc':
 	PLATFORM 	= 'gcc'
 	EXEC_PATH   = 'C:/Users/Gang/Tools/Sourcery_CodeBench_Lite_for_ARM_EABI/bin'
 elif CROSS_TOOL == 'keil':

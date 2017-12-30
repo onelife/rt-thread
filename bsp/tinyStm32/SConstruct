@@ -26,10 +26,10 @@ Export('rtconfig')
 # prepare building environment
 objs = PrepareBuilding(env, RTT_ROOT)
 
-# STM32 firemare library building script
-objs = objs + SConscript( GetCurrentDir() + '/Libraries/SConscript', variant_dir='build/Libraries', duplicate=0)
+# STM32 firmware library building script
+objs += SConscript( GetCurrentDir() + '/Libraries/SConscript', variant_dir='build/Libraries', duplicate=0)
 if rtconfig.STM32_USB_LIB:
-	objs = objs + SConscript( GetCurrentDir() + '/Libraries/SConscript_usb', variant_dir='build/Libraries', duplicate=0)
+	objs += SConscript( GetCurrentDir() + '/Libraries/SConscript_usb', variant_dir='build/Libraries', duplicate=0)
 
 # build program
 env.Program(TARGET, objs)
