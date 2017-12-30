@@ -43,7 +43,7 @@
  * @addtogroup KernelService
  */
 
-/*@{*/
+/**@{*/
 
 /* global errno in RT-Thread */
 static volatile int _errno;
@@ -462,7 +462,26 @@ rt_int32_t rt_strcmp(const char *cs, const char *ct)
     return (*cs - *ct);
 }
 RTM_EXPORT(rt_strcmp);
+/**
+ * The  strnlen()  function  returns the number of characters in the
+ * string pointed to by s, excluding the terminating null byte ('\0'), 
+ * but at most maxlen.  In doing this, strnlen() looks only at the 
+ * first maxlen characters in the string pointed to by s and never 
+ * beyond s+maxlen.
+ *
+ * @param s the string
+ * @param maxlen the max size
+ * @return the length of string
+ */
+rt_size_t rt_strnlen(const char *s, rt_ubase_t maxlen)
+{
+    const char *sc;
 
+    for (sc = s; *sc != '\0' && sc - s < maxlen; ++sc) /* nothing */
+        ;
+
+    return sc - s;
+}
 /**
  * This function will return the length of a string, which terminate will
  * null character.
@@ -514,7 +533,7 @@ void rt_show_version(void)
     rt_kprintf("- RT -     Thread Operating System\n");
     rt_kprintf(" / | \\     %d.%d.%d build %s\n",
                RT_VERSION, RT_SUBVERSION, RT_REVISION, __DATE__);
-    rt_kprintf(" 2006 - 2015 Copyright by rt-thread team\n");
+    rt_kprintf(" 2006 - 2016 Copyright by rt-thread team\n");
 }
 RTM_EXPORT(rt_show_version);
 
@@ -1089,6 +1108,31 @@ WEAK void rt_hw_console_output(const char *str)
 RTM_EXPORT(rt_hw_console_output);
 
 /**
+ * This function will put string to the console.
+ *
+ * @param str the string output to the console.
+ */
+void rt_kputs(const char *str)
+{
+#ifdef RT_USING_DEVICE
+    if (_console_device == RT_NULL)
+    {
+        rt_hw_console_output(str);
+    }
+    else
+    {
+        rt_uint16_t old_flag = _console_device->open_flag;
+
+        _console_device->open_flag |= RT_DEVICE_FLAG_STREAM;
+        rt_device_write(_console_device, 0, str, rt_strlen(str));
+        _console_device->open_flag = old_flag;
+    }
+#else
+    rt_hw_console_output(str);
+#endif
+}
+
+/**
  * This function will print a formatted string on system console
  *
  * @param fmt the format
@@ -1221,7 +1265,7 @@ const rt_uint8_t __lowest_bit_bitmap[] =
  * @return return the index of the first bit set. If value is 0, then this function
  * shall return 0.
  */
-int __rt_ffs(int value)
+rt_ubase_t __rt_ffs(rt_ubase_t value)
 {
     if (value == 0) return 0;
 
@@ -1282,7 +1326,7 @@ void rt_assert_handler(const char* ex_string, const char* func, rt_size_t line)
 	else
 	{
         rt_assert_hook(ex_string, func, line);
-    }                                                                     
+    }
 }
 RTM_EXPORT(rt_assert_handler);
 #endif /* RT_DEBUG */
@@ -1309,4 +1353,4 @@ int vsprintf(char *buf, const char *format, va_list arg_ptr) __attribute__((weak
 
 #endif
 
-/*@}*/
+/**@}*/
