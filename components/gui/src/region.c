@@ -1,11 +1,21 @@
 /*
  * File      : region.c
- * This file is part of RT-Thread RTOS
- * COPYRIGHT (C) 2006 - 2009, RT-Thread Development Team
+ * This file is part of RT-Thread GUI Engine
+ * COPYRIGHT (C) 2006 - 2017, RT-Thread Development Team
  *
- * The license and distribution terms for this file may be
- * found in the file LICENSE in this distribution or at
- * http://www.rt-thread.org/license/LICENSE
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * Change Logs:
  * Date           Author       Notes
@@ -2017,113 +2027,6 @@ rtgui_rect_t *rtgui_region_extents(rtgui_region_t *region)
     return(&region->extents);
 }
 
-#define ExchangeSpans(a, b)     \
-{                               \
-    rtgui_point_t tpt;          \
-    int    tw;                  \
-                                \
-    tpt = spans[a]; spans[a] = spans[b]; spans[b] = tpt;    \
-    tw = widths[a]; widths[a] = widths[b]; widths[b] = tw;  \
-}
-
-/* ||| I should apply the merge sort code to rectangle sorting above, and see
-   if mapping time can be improved.  But right now I've been at work 12 hours,
-   so forget it.
-*/
-
-static void QuickSortSpans(
-    rtgui_point_t spans[],
-    int     widths[],
-    int     numSpans)
-{
-    int     y;
-    int     i, j, m;
-    rtgui_point_t *r;
-
-    /* Always called with numSpans > 1 */
-    /* Sorts only by y, doesn't bother to sort by x */
-
-    do
-    {
-        if (numSpans < 9)
-        {
-            /* Do insertion sort */
-            int yprev;
-
-            yprev = spans[0].y;
-            i = 1;
-            do
-            {
-                /* while i != numSpans */
-                y = spans[i].y;
-                if (yprev > y)
-                {
-                    /* spans[i] is out of order.  Move into proper location. */
-                    rtgui_point_t tpt;
-                    int     tw, k;
-
-                    for (j = 0; y >= spans[j].y; j++)
-                    {}
-                    tpt = spans[i];
-                    tw  = widths[i];
-                    for (k = i; k != j; k--)
-                    {
-                        spans[k] = spans[k - 1];
-                        widths[k] = widths[k - 1];
-                    }
-                    spans[j] = tpt;
-                    widths[j] = tw;
-                    y = spans[i].y;
-                } /* if out of order */
-                yprev = y;
-                i++;
-            }
-            while (i != numSpans);
-            return;
-        }
-
-        /* Choose partition element, stick in location 0 */
-        m = numSpans / 2;
-        if (spans[m].y > spans[0].y)        ExchangeSpans(m, 0);
-        if (spans[m].y > spans[numSpans - 1].y)   ExchangeSpans(m, numSpans - 1);
-        if (spans[m].y > spans[0].y)        ExchangeSpans(m, 0);
-        y = spans[0].y;
-
-        /* Partition array */
-        i = 0;
-        j = numSpans;
-        do
-        {
-            r = &(spans[i]);
-            do
-            {
-                r++;
-                i++;
-            }
-            while (i != numSpans && r->y < y);
-            r = &(spans[j]);
-            do
-            {
-                r--;
-                j--;
-            }
-            while (y < r->y);
-            if (i < j)
-                ExchangeSpans(i, j);
-        }
-        while (i < j);
-
-        /* Move partition element back to middle */
-        ExchangeSpans(0, j);
-
-        /* Recurse */
-        if (numSpans - j - 1 > 1)
-            QuickSortSpans(&spans[j + 1], &widths[j + 1], numSpans - j - 1);
-        numSpans = j;
-    }
-    while (numSpans > 1);
-}
-
 #define RTGUI_REGION_TRACE
 
 #ifdef RTGUI_REGION_TRACE
@@ -2167,14 +2070,14 @@ void rtgui_region_draw_clip(rtgui_region_t *region, struct rtgui_dc *dc)
 
     x = region->extents.x1;
     y = region->extents.y1;
-    
+
     for (i = 0; i < num; i++)
     {
         struct rtgui_rect rect;
 
         rect = rects[i];
 
-        rtgui_rect_moveto(&rect, -x, -y);
+		rtgui_rect_move(&rect, -x, -y);
         rtgui_dc_draw_rect(dc, &rect);
 
         rt_snprintf(text, sizeof(text) - 1, "%d", i);
@@ -2197,7 +2100,7 @@ int rtgui_region_is_flat(rtgui_region_t *region)
 }
 RTM_EXPORT(rtgui_region_is_flat);
 
-void rtgui_rect_moveto(rtgui_rect_t *rect, int x, int y)
+void rtgui_rect_move(rtgui_rect_t *rect, int x, int y)
 {
     rect->x1 += x;
     rect->x2 += x;
@@ -2205,9 +2108,24 @@ void rtgui_rect_moveto(rtgui_rect_t *rect, int x, int y)
     rect->y1 += y;
     rect->y2 += y;
 }
-RTM_EXPORT(rtgui_rect_moveto);
+RTM_EXPORT(rtgui_rect_move);
 
-void rtgui_rect_moveto_align(const rtgui_rect_t *rect, rtgui_rect_t *to, int align)
+void rtgui_rect_move_to_point(rtgui_rect_t *rect, int x, int y)
+{
+    int mx, my;
+
+    mx = x - rect->x1;
+    my = y - rect->y1;
+
+    rect->x1 += mx;
+    rect->x2 += mx;
+
+    rect->y1 += my;
+    rect->y2 += my;
+}
+RTM_EXPORT(rtgui_rect_move_to_point);
+
+void rtgui_rect_move_to_align(const rtgui_rect_t *rect, rtgui_rect_t *to, int align)
 {
     int dw, dh;
     dw = 0;
@@ -2220,11 +2138,11 @@ void rtgui_rect_moveto_align(const rtgui_rect_t *rect, rtgui_rect_t *to, int ali
     if (dh < 0) dh = 0;
 
     /* move to insider of rect */
-    rtgui_rect_moveto(to, rect->x1, rect->y1);
+	rtgui_rect_move_to_point(to, rect->x1, rect->y1);
 
     /* limited the destination rect to source rect */
-    // if (dw == 0) to->x2 = rect->x2;
-    // if (dh == 0) to->y2 = rect->y2;
+     if (dw == 0) to->x2 = rect->x2;
+     if (dh == 0) to->y2 = rect->y2;
 
     /* align to right */
     if (align & RTGUI_ALIGN_RIGHT)
@@ -2232,6 +2150,12 @@ void rtgui_rect_moveto_align(const rtgui_rect_t *rect, rtgui_rect_t *to, int ali
         to->x1 += dw;
         to->x2 += dw;
     }
+	/* align to center horizontal */
+	else if (align & RTGUI_ALIGN_CENTER_HORIZONTAL)
+	{
+		to->x1 += dw >> 1;
+		to->x2 += dw >> 1;
+	}
 
     /* align to bottom */
     if (align & RTGUI_ALIGN_BOTTOM)
@@ -2239,22 +2163,14 @@ void rtgui_rect_moveto_align(const rtgui_rect_t *rect, rtgui_rect_t *to, int ali
         to->y1 += dh;
         to->y2 += dh;
     }
-
-    /* align to center horizontal */
-    if (align & RTGUI_ALIGN_CENTER_HORIZONTAL)
-    {
-        to->x1 += dw >> 1;
-        to->x2 += dw >> 1;
-    }
-
     /* align to center vertical */
-    if (align & RTGUI_ALIGN_CENTER_VERTICAL)
+    else if (align & RTGUI_ALIGN_CENTER_VERTICAL)
     {
         to->y1 += dh >> 1;
         to->y2 += dh >> 1;
     }
 }
-RTM_EXPORT(rtgui_rect_moveto_align);
+RTM_EXPORT(rtgui_rect_move_to_align);
 
 void rtgui_rect_inflate(rtgui_rect_t *rect, int d)
 {
@@ -2274,6 +2190,22 @@ void rtgui_rect_intersect(rtgui_rect_t *src, rtgui_rect_t *dest)
     if (dest->y2 > src->y2) dest->y2 = src->y2;
 }
 RTM_EXPORT(rtgui_rect_intersect);
+
+/* union src rect into dest rect */
+void rtgui_rect_union(rtgui_rect_t *src, rtgui_rect_t *dest)
+{
+    if (rtgui_rect_is_empty(dest))
+    {
+        *dest = *src;
+        return ;
+    }
+
+    if (dest->x1 > src->x1) dest->x1 = src->x1;
+    if (dest->y1 > src->y1) dest->y1 = src->y1;
+    if (dest->x2 < src->x2) dest->x2 = src->x2;
+    if (dest->y2 < src->y2) dest->y2 = src->y2;
+}
+RTM_EXPORT(rtgui_rect_union);
 
 int rtgui_rect_contains_point(const rtgui_rect_t *rect, int x, int y)
 {
@@ -2333,12 +2265,14 @@ RTM_EXPORT(rtgui_rect_is_empty);
 
 rtgui_rect_t *rtgui_rect_set(rtgui_rect_t *rect, int x, int y, int w, int h)
 {
-	RT_ASSERT(rect != RT_NULL);
+    RT_ASSERT(rect != RT_NULL);
 
-	rect->x1 = x; rect->y1 = y;
-	rect->x2 = x + w; rect->y2 = y + h;
+    rect->x1 = x;
+    rect->y1 = y;
+    rect->x2 = x + w;
+    rect->y2 = y + h;
 
-	return rect;
+    return rect;
 }
 RTM_EXPORT(rtgui_rect_set);
 

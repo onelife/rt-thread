@@ -1,16 +1,26 @@
 /*
  * File      : rtgui_system.c
- * This file is part of RTGUI in RT-Thread RTOS
- * COPYRIGHT (C) 2006 - 2009, RT-Thread Development Team
+ * This file is part of RT-Thread GUI Engine
+ * COPYRIGHT (C) 2006 - 2017, RT-Thread Development Team
  *
- * The license and distribution terms for this file may be
- * found in the file LICENSE in this distribution or at
- * http://www.rt-thread.org/license/LICENSE
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * Change Logs:
  * Date           Author       Notes
  * 2009-10-04     Bernard      first version
- * 2016-03-23     Bernard      fix the default font initialization issue. 
+ * 2016-03-23     Bernard      fix the default font initialization issue.
  */
 
 #include <rtgui/rtgui.h>
@@ -21,6 +31,10 @@
 #include <rtgui/rtgui_server.h>
 #include <rtgui/rtgui_system.h>
 #include <rtgui/widgets/window.h>
+
+#ifdef RTGUI_USING_TTF
+#include <rtgui/font_freetype.h>
+#endif
 
 #ifdef _WIN32_NATIVE
 #define RTGUI_MEM_TRACE
@@ -58,6 +72,10 @@ int rtgui_system_server_init(void)
     rtgui_font_set_defaut(&rtgui_font_asc12);
 #else
     rtgui_font_set_defaut(&rtgui_font_asc12);
+#endif
+
+#ifdef RTGUI_USING_TTF
+    rtgui_ttf_system_init();
 #endif
 
     return 0;
@@ -333,7 +351,7 @@ void *rtgui_realloc(void *ptr, rt_size_t size)
     new_ptr = rtgui_malloc(size);
     if ((new_ptr != RT_NULL) && (ptr != RT_NULL))
     {
-        rt_memcpy(new_ptr, ptr, size);
+        memcpy(new_ptr, ptr, size);
         rtgui_free(ptr);
     }
 #else
@@ -399,6 +417,7 @@ const char *rtgui_event_string[] =
     "WIN_CLOSE",            /* close a window       */
     "WIN_MOVE",             /* move a window        */
     "WIN_RESIZE",           /* resize a window      */
+	"WIN_UPDATE_END",
     "WIN_MODAL_ENTER",          /* a window modals      */
 
     "SET_WM",               /* set window manager   */
@@ -413,7 +432,7 @@ const char *rtgui_event_string[] =
     "TIMER",                /* timer                */
     "UPDATE_TOPLVL",        /* update toplevel      */
 
-	"VPAINT_REQ", 			/* virtual paint request */
+    "VPAINT_REQ", 			/* virtual paint request */
 
     /* clip rect information */
     "CLIP_INFO",            /* clip rect info       */
@@ -423,7 +442,7 @@ const char *rtgui_event_string[] =
     "MOUSE_BUTTON",         /* mouse button info    */
     "KBD",                  /* keyboard info        */
     "TOUCH",                /* touch info           */
-	"GESTURE", 				/* gesture              */
+    "GESTURE", 				/* gesture              */
 
     "FOCUSED",              /* widget got focuse    */
     "SCROLLED",             /* scroll bar scrolled  */
@@ -528,6 +547,8 @@ static void rtgui_event_dump(struct rtgui_app* app, rtgui_event_t *event)
     break;
 
     case RTGUI_EVENT_WIN_ACTIVATE:
+	case RTGUI_EVENT_WIN_DESTROY:
+	case RTGUI_EVENT_WIN_CLOSE:
     case RTGUI_EVENT_WIN_DEACTIVATE:
     case RTGUI_EVENT_WIN_SHOW:
     case RTGUI_EVENT_WIN_HIDE:
@@ -599,7 +620,7 @@ static void rtgui_event_dump(struct rtgui_app* app, rtgui_event_t *event)
     break;
 
     default:
-    break;
+        break;
     }
 
     rt_kprintf("\n");
@@ -722,7 +743,7 @@ RTM_EXPORT(rtgui_recv);
 
 rt_err_t rtgui_recv_filter(rt_uint32_t type, rtgui_event_t *event, rt_size_t event_size)
 {
-	rtgui_event_t *e;
+    rtgui_event_t *e;
     struct rtgui_app *app;
 
     RT_ASSERT(event != RT_NULL);
@@ -732,12 +753,12 @@ rt_err_t rtgui_recv_filter(rt_uint32_t type, rtgui_event_t *event, rt_size_t eve
     if (app == RT_NULL)
         return -RT_ERROR;
 
-	e = (rtgui_event_t*)&app->event_buffer[0];
+    e = (rtgui_event_t*)&app->event_buffer[0];
     while (rt_mq_recv(app->mq, e, sizeof(union rtgui_event_generic), RT_WAITING_FOREVER) == RT_EOK)
     {
         if (e->type == type)
         {
-            rt_memcpy(event, e, event_size);
+            memcpy(event, e, event_size);
             return RT_EOK;
         }
         else
@@ -785,23 +806,23 @@ RTM_EXPORT(rtgui_screen_unlock);
 
 int rtgui_screen_lock_freeze(void)
 {
-	int hold = 0;
+    int hold = 0;
 
-	if (_screen_lock.owner == rt_thread_self())
-	{
-		int index;
+    if (_screen_lock.owner == rt_thread_self())
+    {
+        int index;
 
-		index = hold = _screen_lock.hold;
-		while (index --) rt_mutex_release(&_screen_lock);
-	}
+        index = hold = _screen_lock.hold;
+        while (index --) rt_mutex_release(&_screen_lock);
+    }
 
-	return hold;
+    return hold;
 }
 RTM_EXPORT(rtgui_screen_lock_freeze);
 
 void rtgui_screen_lock_thaw(int value)
 {
-	while (value--) rt_mutex_take(&_screen_lock, RT_WAITING_FOREVER);
+    while (value--) rt_mutex_take(&_screen_lock, RT_WAITING_FOREVER);
 }
 RTM_EXPORT(rtgui_screen_lock_thaw);
 

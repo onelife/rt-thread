@@ -1,11 +1,21 @@
 /*
  * File      : font.c
- * This file is part of RT-Thread RTOS
- * COPYRIGHT (C) 2006 - 2010, RT-Thread Development Team
+ * This file is part of RT-Thread GUI Engine
+ * COPYRIGHT (C) 2006 - 2017, RT-Thread Development Team
  *
- * The license and distribution terms for this file may be
- * found in the file LICENSE in this distribution or at
- * http://www.rt-thread.org/license/LICENSE
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * Change Logs:
  * Date           Author       Notes
@@ -34,15 +44,15 @@ void rtgui_bitmap_font_draw_char(struct rtgui_font_bitmap *font, struct rtgui_dc
     const rt_uint8_t *font_ptr;
     int x, y, w, h, style;
     register rt_base_t i, j, /*k,*/ word_bytes;
-	struct rtgui_rect dc_rect;
-	
+    struct rtgui_rect dc_rect;
+
     /* check first and last char */
     if (ch < font->first_char || ch > font->last_char) return;
 
     /* get text style */
     style = rtgui_dc_get_gc(dc)->textstyle;
     bc = rtgui_dc_get_gc(dc)->background;
-	rtgui_dc_get_rect(dc, &dc_rect);
+    rtgui_dc_get_rect(dc, &dc_rect);
 
     x = rect->x1;
     y = rect->y1;
@@ -65,8 +75,8 @@ void rtgui_bitmap_font_draw_char(struct rtgui_font_bitmap *font, struct rtgui_dc
         rt_uint8_t chr = 0;
         const rt_uint8_t *ptr = font_ptr + i * word_bytes;
 
-		if ((i + y) >= dc_rect.y2) continue;
-		if ((i + y) < 0) continue;
+        if ((i + y) >= dc_rect.y2) continue;
+        if ((i + y) < 0) continue;
 
         for (j = 0; j < w; j++)
         {
@@ -85,6 +95,7 @@ static void rtgui_bitmap_font_draw_text(struct rtgui_font *font, struct rtgui_dc
                                         const char *text, rt_ubase_t len, struct rtgui_rect *rect)
 {
     rt_uint32_t length;
+    struct rtgui_rect text_rect;
     struct rtgui_font_bitmap *bmp_font = (struct rtgui_font_bitmap *)(font->data);
 #ifdef RTGUI_USING_FONTHZ
     struct rtgui_font *hz_font;
@@ -92,18 +103,21 @@ static void rtgui_bitmap_font_draw_text(struct rtgui_font *font, struct rtgui_dc
 
     RT_ASSERT(bmp_font != RT_NULL);
 
-	/* parameter check */
-    if (rect->y1 > rect->y2) return;
+    rtgui_font_get_metrics(rtgui_dc_get_gc(dc)->font, text, &text_rect);
+    rtgui_rect_move_to_align(rect, &text_rect, RTGUI_DC_TEXTALIGN(dc));
+
+    /* parameter check */
+    if (text_rect.y1 > text_rect.y2) return;
 
 #ifdef RTGUI_USING_FONTHZ
     hz_font = rtgui_font_refer("hz", font->height);
-    while ((rect->x1 < rect->x2) && len)
+    while ((text_rect.x1 < text_rect.x2) && len)
     {
         length = 0;
         while ((rt_uint8_t) * (text + length) >= 0x80) length ++; /* it's not a ascii character */
         if (length > 0)
         {
-            if (hz_font != RT_NULL) rtgui_font_draw(hz_font, dc, text, length, rect);
+            if (hz_font != RT_NULL) rtgui_font_draw(hz_font, dc, text, length, &text_rect);
             text += length;
             len -= length;
         }
@@ -113,15 +127,15 @@ static void rtgui_bitmap_font_draw_text(struct rtgui_font *font, struct rtgui_dc
         if (length > 0)
         {
             len -= length;
-            while (length-- && rect->x1 < rect->x2)
+            while (length-- && text_rect.x1 < text_rect.x2)
             {
-                rtgui_bitmap_font_draw_char(bmp_font, dc, *text, rect);
+                rtgui_bitmap_font_draw_char(bmp_font, dc, *text, &text_rect);
 
                 /* move x to next character */
                 if (bmp_font->char_width == RT_NULL)
-                    rect->x1 += bmp_font->width;
+                    text_rect.x1 += bmp_font->width;
                 else
-                    rect->x1 += bmp_font->char_width[*text - bmp_font->first_char];
+                    text_rect.x1 += bmp_font->char_width[*text - bmp_font->first_char];
                 text ++;
             }
         }
@@ -130,22 +144,22 @@ static void rtgui_bitmap_font_draw_text(struct rtgui_font *font, struct rtgui_dc
     if (hz_font != RT_NULL) rtgui_font_derefer(hz_font);
 
 #else
-    while ((rect->x1 < rect->x2) && len)
+    while ((text_rect.x1 < text_rect.x2) && len)
     {
         length = 0;
         while (((rt_uint8_t) * (text + length) < 0x80) && *(text + length)) length ++;
         if (length > 0)
         {
             len -= length;
-            while (length-- && rect->x1 < rect->x2)
+            while (length-- && text_rect.x1 < text_rect.x2)
             {
-                rtgui_bitmap_font_draw_char(bmp_font, dc, *text, rect);
+                rtgui_bitmap_font_draw_char(bmp_font, dc, *text, &text_rect);
 
                 /* move x to next character */
                 if (bmp_font->char_width == RT_NULL)
-                    rect->x1 += bmp_font->width;
+                    text_rect.x1 += bmp_font->width;
                 else
-                    rect->x1 += bmp_font->char_width[*text - bmp_font->first_char];
+                    text_rect.x1 += bmp_font->char_width[*text - bmp_font->first_char];
                 text ++;
             }
         }
