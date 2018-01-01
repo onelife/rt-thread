@@ -31,8 +31,5 @@ objs += SConscript( GetCurrentDir() + '/Libraries/SConscript', variant_dir='buil
 if rtconfig.STM32_USB_LIB:
 	objs += SConscript( GetCurrentDir() + '/Libraries/SConscript_usb', variant_dir='build/Libraries', duplicate=0)
 
-# build program
-env.Program(TARGET, objs)
-
-# end building
-EndBuilding(TARGET)
+# make a building
+DoBuilding(TARGET, objs)

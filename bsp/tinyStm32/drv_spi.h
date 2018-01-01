@@ -67,7 +67,7 @@
 #define SPI_COMMAND_WAIT_TIME       (RT_TICK_PER_SECOND / 10)
 
 /* Exported types ------------------------------------------------------------*/
-struct miniStm32_spi_device
+struct bsp_spi_device
 {
     rt_uint8_t              counter;
     rt_uint8_t              number;
@@ -78,7 +78,7 @@ struct miniStm32_spi_device
     struct rt_semaphore     lock;
 };
 
-struct miniStm32_spi_cmd_message
+struct bsp_spi_cmd_message
 {
     rt_uint32_t             cmd;
     rt_uint32_t             other;
@@ -86,7 +86,7 @@ struct miniStm32_spi_cmd_message
     rt_uint8_t              *ptr;
 };
 
-struct miniStm32_spi_ret_message
+struct bsp_spi_ret_message
 {
     rt_uint32_t             cmd;
     rt_uint32_t             other;
@@ -94,13 +94,13 @@ struct miniStm32_spi_ret_message
     rt_err_t                ret;
 };
 
-union miniStm32_spi_exec_message
+union bsp_spi_exec_message
 {
-    struct miniStm32_spi_cmd_message cmd;
-    struct miniStm32_spi_ret_message ret;
+    struct bsp_spi_cmd_message cmd;
+    struct bsp_spi_ret_message ret;
 };
 
-struct miniStm32_spi_task_struct
+struct bsp_spi_task_struct
 {
     struct rt_thread        thread;
     struct rt_messagequeue  rx_msgs;
@@ -110,46 +110,46 @@ struct miniStm32_spi_task_struct
                                 (SPI_RX_MESSAGE_SIZE + 4)];
 };
 
-struct miniStm32_spi_unit_struct
+struct bsp_spi_unit_struct
 {
-    struct miniStm32_spi_task_struct task;
+    struct bsp_spi_task_struct task;
     struct rt_device        device;
-    struct miniStm32_spi_device spi;
+    struct bsp_spi_device spi;
 };
 
-struct miniStm32_spi_unit_init
+struct bsp_spi_unit_init
 {
     rt_uint8_t              number;
     rt_uint32_t             config;
     const rt_uint8_t        *name;
-    struct miniStm32_spi_unit_struct *unit;
+    struct bsp_spi_unit_struct *unit;
 };
 
-struct miniStm32_spi_int_mode
+struct bsp_spi_int_mode
 {
     rt_uint8_t              *data_ptr;
     rt_uint8_t              data_size;
     rt_uint32_t             read_index, save_index;
 };
 
-struct miniStm32_spi_dma_node
+struct bsp_spi_dma_node
 {
     /* buffer info */
     rt_uint32_t             *data_ptr;
     rt_uint16_t             data_size;
 
-    struct miniStm32_spi_dma_node *next, *prev;
+    struct bsp_spi_dma_node *next, *prev;
 };
 
-struct miniStm32_spi_dma_mode
+struct bsp_spi_dma_mode
 {
     DMA_Channel_TypeDef     *dma_chn;
-    struct miniStm32_spi_dma_node *list_head, *list_tail;
+    struct bsp_spi_dma_node *list_head, *list_tail;
 
     /* Memory pool */
     struct rt_mempool       dma_mp;
     rt_uint8_t              mem_pool[SPI_DMA_QUEUE_SIZE * \
-                                (sizeof(struct miniStm32_spi_dma_node) + 4)];
+                                (sizeof(struct bsp_spi_dma_node) + 4)];
 };
 
 /* Exported constants --------------------------------------------------------*/

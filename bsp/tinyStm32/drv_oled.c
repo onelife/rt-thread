@@ -26,9 +26,9 @@
 #endif
 #include "drv_oled.h"
 
-#if defined(BOARD_USING_OLED)
+#if defined(BSP_USING_OLED)
 
-#if defined(RT_USING_RTGUI)
+#if defined(RT_USING_GUIENGINE)
 #include <rtgui/rtgui.h>
 #include <rtgui/driver.h>
 #else
@@ -57,7 +57,7 @@ static struct rt_device                         oled_device;
 static rt_device_t                              spi_dev     = RT_NULL;
 #endif
 struct rt_semaphore                             oled_lock;
-#if defined(RT_USING_RTGUI)
+#if defined(RT_USING_GUIENGINE)
 static const struct rtgui_graphic_driver_ops    oled_ops    =
     {
         oled_setPixel,
@@ -755,7 +755,7 @@ static rt_err_t board_oled_init(rt_device_t dev)
     do
     {
 #if (OLED_DEVICE_INTERFACE == INTERFACE_4WIRE_SPI)
-        struct miniStm32_spi_device *spi;
+        struct bsp_spi_device *spi;
 
         /* Open SPI device */
         if (rt_device_open(spi_dev, RT_DEVICE_OFLAG_RDWR) != RT_EOK)
@@ -764,7 +764,7 @@ static rt_err_t board_oled_init(rt_device_t dev)
         }
 
         /* Set SPI speed */
-        spi = (struct miniStm32_spi_device *)(spi_dev->user_data);
+        spi = (struct bsp_spi_device *)(spi_dev->user_data);
         spi->spi_device->CR1 &= ~0x0038;
         spi->spi_device->CR1 |= OLED_SPI_SPEED;
 #endif
@@ -855,7 +855,7 @@ static rt_err_t miniStm32_oled_close(rt_device_t dev)
 * @return
 *   Error code
 ******************************************************************************/
-static rt_err_t miniStm32_oled_control(rt_device_t dev, rt_uint8_t cmd, void *args)
+static rt_err_t miniStm32_oled_control(rt_device_t dev, int cmd, void *args)
 {
 	switch (cmd)
 	{
@@ -921,7 +921,7 @@ void miniStm32_hw_oled_init(void)
         oled_device.read            = RT_NULL;
         oled_device.write           = RT_NULL;
         oled_device.control         = miniStm32_oled_control;
-#if defined(RT_USING_RTGUI)
+#if defined(RT_USING_GUIENGINE)
         oled_device.user_data       = (void *)&oled_ops;
 #else
         oled_device.user_data       = RT_NULL;
@@ -934,7 +934,7 @@ void miniStm32_hw_oled_init(void)
         {
             break;
         }
-#if defined(RT_USING_RTGUI)
+#if defined(RT_USING_GUIENGINE)
         /* Set as rtgui graphic driver */
         if (rtgui_graphic_set_device(&oled_device) != RT_EOK)
         {
@@ -948,7 +948,7 @@ void miniStm32_hw_oled_init(void)
     oled_debug("OLED err: H/W init failed!\n");
 }
 
-#endif /* defined(BOARD_USING_OLED) */
+#endif /* defined(BSP_USING_OLED) */
 /***************************************************************************//**
  * @}
  ******************************************************************************/

@@ -32,7 +32,6 @@ BUILD = 'debug'
 # BUILD = 'release'
 
 if PLATFORM == 'gcc':
-    # toolchains
     PREFIX = 'arm-none-eabi-'
     CC = PREFIX + 'gcc'
     AS = PREFIX + 'gcc'
@@ -60,7 +59,6 @@ if PLATFORM == 'gcc':
     POST_ACTION = OBJCPY + ' -O binary $TARGET RTT_tinyStm32.bin\n' + SIZE + ' $TARGET \n'
 
 elif PLATFORM == 'armcc':
-    # toolchains
     CC = 'armcc'
     AS = 'armasm'
     AR = 'armar'
@@ -86,7 +84,6 @@ elif PLATFORM == 'armcc':
     POST_ACTION = 'fromelf --bin $TARGET --output rtthread.bin \nfromelf -z $TARGET'
 
 elif PLATFORM == 'iar':
-    # toolchains
     CC = 'iccarm'
     AS = 'iasmarm'
     AR = 'iarchive'

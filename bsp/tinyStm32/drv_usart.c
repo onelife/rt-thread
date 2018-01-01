@@ -24,7 +24,7 @@
 #include "board.h"
 #include "hdl_interrupt.h"
 #include "drv_usart.h"
-#if (defined(MINISTM32_USING_USART1) || defined(MINISTM32_USING_USART2) || defined(MINISTM32_USING_USART3))
+#if (defined(BSP_USING_USART1) || defined(BSP_USING_USART2) || defined(BSP_USING_USART3))
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define USART1_DR_Base                      (USART1_BASE + 0x04)
@@ -53,42 +53,42 @@
 #define DMA1_Channel_USART3_RX_IRQn         (DMA1_Channel3_IRQn)
 
 /* Private macro -------------------------------------------------------------*/
-#ifdef MINISTM32_USART_DEBUG
+#ifdef BSP_USART_DEBUG
 #define usart_debug(format,args...)         rt_kprintf(format, ##args)
 #else
 #define usart_debug(format,args...)
 #endif
 
 /* Private variables ---------------------------------------------------------*/
-static struct miniStm32_usart_task_struct *usart_tasks[3];
+static struct bsp_usart_task_struct *usart_tasks[3];
 
-#if (defined(USART1) || defined(MINISTM32_USING_USART1))
-static struct miniStm32_usart_unit_struct usart1;
+#if (defined(USART1) || defined(BSP_USING_USART1))
+static struct bsp_usart_unit_struct usart1;
  #if (USART1_USART_MODE & USART_CONFIG_DMA_TX)
- static struct miniStm32_usart_dma_mode usart1_dma_tx;
+ static struct bsp_usart_dma_mode usart1_dma_tx;
  #endif
  #if (USART1_USART_MODE & USART_CONFIG_INT_RX)
- static struct miniStm32_usart_int_mode usart1_int_rx = {0};
+ static struct bsp_usart_int_mode usart1_int_rx = {0};
  #endif
 #endif
 
-#if (defined(USART2) || defined(MINISTM32_USING_USART2))
-static struct miniStm32_usart_unit_struct usart2;
+#if (defined(USART2) || defined(BSP_USING_USART2))
+static struct bsp_usart_unit_struct usart2;
  #if (USART2_USART_MODE & USART_CONFIG_DMA_TX)
- static struct miniStm32_usart_dma_mode usart2_dma_tx;
+ static struct bsp_usart_dma_mode usart2_dma_tx;
  #endif
  #if (USART2_USART_MODE & USART_CONFIG_INT_RX)
- static struct miniStm32_usart_int_mode usart2_int_rx = {0};
+ static struct bsp_usart_int_mode usart2_int_rx = {0};
  #endif
 #endif
 
-#if (defined(USART3) || defined(MINISTM32_USING_USART3))
-static struct miniStm32_usart_unit_struct usart3;
+#if (defined(USART3) || defined(BSP_USING_USART3))
+static struct bsp_usart_unit_struct usart3;
  #if (USART3_USART_MODE & USART_CONFIG_DMA_TX)
- static struct miniStm32_usart_dma_mode usart3_dma_tx;
+ static struct bsp_usart_dma_mode usart3_dma_tx;
  #endif
  #if (USART3_USART_MODE & USART_CONFIG_INT_RX)
- static struct miniStm32_usart_int_mode usart3_int_rx = {0};
+ static struct bsp_usart_int_mode usart3_int_rx = {0};
  #endif
 #endif
 
@@ -105,15 +105,15 @@ static struct miniStm32_usart_unit_struct usart3;
  * @param[in] dev
  *  Pointer to device descriptor
  ******************************************************************************/
-void miniStm32_usart_dma_tx_isr(rt_device_t dev)
+void bsp_usart_dma_tx_isr(rt_device_t dev)
 {
-    struct miniStm32_usart_device *usart;
-    struct miniStm32_usart_dma_mode *dma_tx;
-	struct miniStm32_usart_dma_node *dma_node;
+    struct bsp_usart_device *usart;
+    struct bsp_usart_dma_mode *dma_tx;
+	struct bsp_usart_dma_node *dma_node;
 	rt_uint32_t level;
 
-    usart = (struct miniStm32_usart_device *)dev->user_data;
-    dma_tx = (struct miniStm32_usart_dma_mode *)usart->tx_mode;
+    usart = (struct bsp_usart_device *)dev->user_data;
+    dma_tx = (struct bsp_usart_dma_mode *)usart->tx_mode;
 	dma_node = dma_tx->list_head;
 
     RT_ASSERT((dev->flag & RT_DEVICE_FLAG_DMA_TX) && (dma_node != RT_NULL));
@@ -154,19 +154,19 @@ void miniStm32_usart_dma_tx_isr(rt_device_t dev)
     }
 }
 
-static rt_err_t miniStm32_usart_dma_tx(
-    struct miniStm32_usart_device *usart,
+static rt_err_t bsp_usart_dma_tx(
+    struct bsp_usart_device *usart,
     rt_uint32_t *buffer,
     rt_uint16_t size)
 {
-    struct miniStm32_usart_dma_mode *dma_tx;
-    struct miniStm32_usart_dma_node *dma_node;
+    struct bsp_usart_dma_mode *dma_tx;
+    struct bsp_usart_dma_node *dma_node;
     rt_uint32_t level;
 
-    dma_tx = (struct miniStm32_usart_dma_mode *)usart->tx_mode;
+    dma_tx = (struct bsp_usart_dma_mode *)usart->tx_mode;
 
     /* Allocate a data node */
-    dma_node = (struct miniStm32_usart_dma_node *)rt_mp_alloc(
+    dma_node = (struct bsp_usart_dma_node *)rt_mp_alloc(
             &(dma_tx->dma_mp), RT_WAITING_FOREVER);
     if (dma_node == RT_NULL)
     {
@@ -221,16 +221,16 @@ static rt_err_t miniStm32_usart_dma_tx(
  * @param[in] dev
  *  Pointer to device descriptor
  ******************************************************************************/
-void miniStm32_usart_int_rx_isr(rt_device_t dev)
+void bsp_usart_int_rx_isr(rt_device_t dev)
 {
-    struct miniStm32_usart_device     *usart;
-    struct miniStm32_usart_int_mode   *int_rx;
+    struct bsp_usart_device     *usart;
+    struct bsp_usart_int_mode   *int_rx;
 
     /* interrupt mode receive */
     RT_ASSERT(dev->flag & RT_DEVICE_FLAG_INT_RX);
 
-    usart = (struct miniStm32_usart_device *)(dev->user_data);
-    int_rx = (struct miniStm32_usart_int_mode *)(usart->rx_mode);
+    usart = (struct bsp_usart_device *)(dev->user_data);
+    int_rx = (struct bsp_usart_int_mode *)(usart->rx_mode);
 
     /* Set status */
     usart->status |= USART_STATUS_RX_BUSY;
@@ -297,7 +297,7 @@ void miniStm32_usart_int_rx_isr(rt_device_t dev)
  *   Error code
  ******************************************************************************/
 static rt_err_t usart_task_exec(rt_uint8_t number,
-    union miniStm32_usart_exec_message *exec_msg,
+    union bsp_usart_exec_message *exec_msg,
     rt_bool_t nonblock)
 {
     rt_err_t ret;
@@ -351,8 +351,8 @@ static rt_err_t usart_task_exec(rt_uint8_t number,
     return ret;
 }
 
-static void usart_task_open(struct miniStm32_usart_unit_struct *cfg,
-   union miniStm32_usart_exec_message *exec_msg)
+static void usart_task_open(struct bsp_usart_unit_struct *cfg,
+   union bsp_usart_exec_message *exec_msg)
 {
     RT_ASSERT(cfg != RT_NULL);
 
@@ -378,8 +378,8 @@ static void usart_task_open(struct miniStm32_usart_unit_struct *cfg,
     exec_msg->ret.ret = RT_EOK;
 }
 
-static void usart_task_close(struct miniStm32_usart_unit_struct *cfg,
-    union miniStm32_usart_exec_message *exec_msg)
+static void usart_task_close(struct bsp_usart_unit_struct *cfg,
+    union bsp_usart_exec_message *exec_msg)
 {
     RT_ASSERT(cfg != RT_NULL);
 
@@ -388,8 +388,8 @@ static void usart_task_close(struct miniStm32_usart_unit_struct *cfg,
     exec_msg->ret.ret = RT_EOK;
 }
 
-static void usart_task_read(struct miniStm32_usart_unit_struct *cfg,
-    union miniStm32_usart_exec_message *exec_msg)
+static void usart_task_read(struct bsp_usart_unit_struct *cfg,
+    union bsp_usart_exec_message *exec_msg)
 {
     RT_ASSERT(cfg != RT_NULL);
 
@@ -414,9 +414,9 @@ static void usart_task_read(struct miniStm32_usart_unit_struct *cfg,
         while (len)
         {
             rt_base_t level;
-            struct miniStm32_usart_int_mode *int_rx;
+            struct bsp_usart_int_mode *int_rx;
 
-            int_rx = (struct miniStm32_usart_int_mode *)cfg->usart.rx_mode;
+            int_rx = (struct bsp_usart_int_mode *)cfg->usart.rx_mode;
 
             /* disable interrupt */
             level = rt_hw_interrupt_disable();
@@ -467,8 +467,8 @@ static void usart_task_read(struct miniStm32_usart_unit_struct *cfg,
     }
 }
 
-static void usart_task_write(struct miniStm32_usart_unit_struct *cfg,
-    union miniStm32_usart_exec_message *exec_msg)
+static void usart_task_write(struct bsp_usart_unit_struct *cfg,
+    union bsp_usart_exec_message *exec_msg)
 {
     RT_ASSERT(cfg != RT_NULL);
 
@@ -500,7 +500,7 @@ static void usart_task_write(struct miniStm32_usart_unit_struct *cfg,
     {
         /* DMA mode */
         usart_debug("USART%d: DMA TX (%d)\n", cfg->usart.number, len);
-        exec_msg->ret.ret = miniStm32_usart_dma_tx(&cfg->usart,
+        exec_msg->ret.ret = bsp_usart_dma_tx(&cfg->usart,
             (rt_uint32_t *)ptr,
             (rt_uint16_t)len);
         if (exec_msg->ret.ret != RT_EOK)
@@ -525,8 +525,8 @@ static void usart_task_write(struct miniStm32_usart_unit_struct *cfg,
     exec_msg->ret.ret = RT_EOK;
 }
 
-static void usart_task_control(struct miniStm32_usart_unit_struct *cfg,
-    union miniStm32_usart_exec_message *exec_msg)
+static void usart_task_control(struct bsp_usart_unit_struct *cfg,
+    union bsp_usart_exec_message *exec_msg)
 {
     RT_ASSERT(cfg != RT_NULL);
 
@@ -590,12 +590,12 @@ static void usart_task_control(struct miniStm32_usart_unit_struct *cfg,
 ******************************************************************************/
 void usart_task_main_loop(void *parameter)
 {
-    struct miniStm32_usart_unit_struct *cfg;
-    union miniStm32_usart_exec_message *p_exec_msg;
+    struct bsp_usart_unit_struct *cfg;
+    union bsp_usart_exec_message *p_exec_msg;
     rt_thread_t self;
     rt_bool_t chk_block;
 
-    cfg = (struct miniStm32_usart_unit_struct *)parameter;
+    cfg = (struct bsp_usart_unit_struct *)parameter;
     self = rt_thread_self();
 
 	if (rt_mq_init(
@@ -696,11 +696,11 @@ USART_MAIN_LOOP:
  * @return
  *   Error code
  ******************************************************************************/
-static rt_err_t miniStm32_usart_init (rt_device_t dev)
+static rt_err_t bsp_usart_init (rt_device_t dev)
 {
-    struct miniStm32_usart_device *usart;
+    struct bsp_usart_device *usart;
 
-    usart = (struct miniStm32_usart_device *)(dev->user_data);
+    usart = (struct bsp_usart_device *)(dev->user_data);
 
     return rt_thread_startup(&usart_tasks[usart->number - 1]->thread);
 }
@@ -722,12 +722,12 @@ static rt_err_t miniStm32_usart_init (rt_device_t dev)
  * @return
  *   Error code
  ******************************************************************************/
-static rt_err_t miniStm32_usart_open(rt_device_t dev, rt_uint16_t oflag)
+static rt_err_t bsp_usart_open(rt_device_t dev, rt_uint16_t oflag)
 {
-    struct miniStm32_usart_device *usart;
-    union miniStm32_usart_exec_message exec_msg;
+    struct bsp_usart_device *usart;
+    union bsp_usart_exec_message exec_msg;
 
-    usart = (struct miniStm32_usart_device *)(dev->user_data);
+    usart = (struct bsp_usart_device *)(dev->user_data);
 
     exec_msg.cmd.cmd = USART_COMMAND_OPEN;
     exec_msg.cmd.other = oflag;
@@ -735,7 +735,7 @@ static rt_err_t miniStm32_usart_open(rt_device_t dev, rt_uint16_t oflag)
     if (!(usart->status & USART_STATUS_START) && \
         (usart->status & USART_STATUS_DIRECT_EXE))
     {
-        struct miniStm32_usart_unit_struct *cfg = RT_NULL;
+        struct bsp_usart_unit_struct *cfg = RT_NULL;
 
         switch (usart->number)
         {
@@ -774,17 +774,17 @@ static rt_err_t miniStm32_usart_open(rt_device_t dev, rt_uint16_t oflag)
  * @return
  *   Error code
  ******************************************************************************/
-static rt_err_t miniStm32_usart_close(rt_device_t dev)
+static rt_err_t bsp_usart_close(rt_device_t dev)
 {
-    struct miniStm32_usart_device *usart;
-    union miniStm32_usart_exec_message exec_msg;
+    struct bsp_usart_device *usart;
+    union bsp_usart_exec_message exec_msg;
 
-    usart = (struct miniStm32_usart_device *)(dev->user_data);
+    usart = (struct bsp_usart_device *)(dev->user_data);
 
     if (!(usart->status & USART_STATUS_START) && \
         (usart->status & USART_STATUS_DIRECT_EXE))
     {
-        struct miniStm32_usart_unit_struct *cfg = RT_NULL;
+        struct bsp_usart_unit_struct *cfg = RT_NULL;
 
         switch (usart->number)
         {
@@ -834,7 +834,7 @@ static rt_err_t miniStm32_usart_close(rt_device_t dev)
  * @return
  *  Number of read bytes
  ******************************************************************************/
-static rt_size_t miniStm32_usart_read (
+static rt_size_t bsp_usart_read (
     rt_device_t     dev,
     rt_off_t        pos,
     void            *buffer,
@@ -842,16 +842,16 @@ static rt_size_t miniStm32_usart_read (
 
 {
     rt_err_t    ret;
-    struct miniStm32_usart_device *usart;
-    union miniStm32_usart_exec_message exec_msg;
+    struct bsp_usart_device *usart;
+    union bsp_usart_exec_message exec_msg;
     rt_bool_t nonblock;
 
-    usart = (struct miniStm32_usart_device *)(dev->user_data);
+    usart = (struct bsp_usart_device *)(dev->user_data);
 
     if (!(usart->status & USART_STATUS_START) && \
         (usart->status & USART_STATUS_DIRECT_EXE))
     {
-        struct miniStm32_usart_unit_struct *cfg = RT_NULL;
+        struct bsp_usart_unit_struct *cfg = RT_NULL;
 
         switch (usart->number)
         {
@@ -881,7 +881,7 @@ static rt_size_t miniStm32_usart_read (
 
     do
     {
-        union miniStm32_usart_exec_message *p_exec_msg;
+        union bsp_usart_exec_message *p_exec_msg;
         
         exec_msg.cmd.cmd = USART_COMMAND_STATUS;
         do
@@ -912,7 +912,7 @@ static rt_size_t miniStm32_usart_read (
         if (exec_msg.ret.other & USART_STATUS_NONBLOCKING)
         {
             nonblock = RT_TRUE;
-            p_exec_msg = rt_malloc(sizeof(union miniStm32_usart_exec_message));
+            p_exec_msg = rt_malloc(sizeof(union bsp_usart_exec_message));
             if (p_exec_msg == RT_NULL)
             {
                 ret = RT_ENOMEM;
@@ -988,7 +988,7 @@ static rt_size_t miniStm32_usart_read (
  * @return
  *   Number of written bytes
  ******************************************************************************/
-static rt_size_t miniStm32_usart_write (
+static rt_size_t bsp_usart_write (
     rt_device_t     dev,
     rt_off_t        pos,
     const void*     buffer,
@@ -996,16 +996,16 @@ static rt_size_t miniStm32_usart_write (
 
 {
     rt_err_t    ret;
-    struct miniStm32_usart_device *usart;
-    union miniStm32_usart_exec_message exec_msg;
+    struct bsp_usart_device *usart;
+    union bsp_usart_exec_message exec_msg;
     rt_bool_t nonblock;
 
-    usart = (struct miniStm32_usart_device *)(dev->user_data);
+    usart = (struct bsp_usart_device *)(dev->user_data);
 
     if (!(usart->status & USART_STATUS_START) && \
         (usart->status & USART_STATUS_DIRECT_EXE))
     {
-        struct miniStm32_usart_unit_struct *cfg = RT_NULL;
+        struct bsp_usart_unit_struct *cfg = RT_NULL;
 
         switch (usart->number)
         {
@@ -1035,7 +1035,7 @@ static rt_size_t miniStm32_usart_write (
 
     do
     {
-        union miniStm32_usart_exec_message *p_exec_msg;
+        union bsp_usart_exec_message *p_exec_msg;
 
         exec_msg.cmd.cmd = USART_COMMAND_STATUS;
         do
@@ -1066,7 +1066,7 @@ static rt_size_t miniStm32_usart_write (
         if (exec_msg.ret.other & USART_STATUS_NONBLOCKING)
         {
             nonblock = RT_TRUE;
-            p_exec_msg = rt_malloc(sizeof(union miniStm32_usart_exec_message));
+            p_exec_msg = rt_malloc(sizeof(union bsp_usart_exec_message));
             if (p_exec_msg == RT_NULL)
             {
                 ret = RT_ENOMEM;
@@ -1139,21 +1139,21 @@ static rt_size_t miniStm32_usart_write (
 * @return
 *   Error code
 ******************************************************************************/
-static rt_err_t miniStm32_usart_control (
+static rt_err_t bsp_usart_control (
     rt_device_t     dev,
     rt_uint8_t      cmd,
     void            *args)
 {
     rt_err_t ret;
-    struct miniStm32_usart_device *usart;
-    union miniStm32_usart_exec_message exec_msg;
+    struct bsp_usart_device *usart;
+    union bsp_usart_exec_message exec_msg;
 
-    usart = (struct miniStm32_usart_device *)(dev->user_data);
+    usart = (struct bsp_usart_device *)(dev->user_data);
 
     if (!(usart->status & USART_STATUS_START) && \
         (usart->status & USART_STATUS_DIRECT_EXE))
     {
-        struct miniStm32_usart_unit_struct *cfg = RT_NULL;
+        struct bsp_usart_unit_struct *cfg = RT_NULL;
 
         switch (usart->number)
         {
@@ -1229,12 +1229,12 @@ static rt_err_t miniStm32_usart_control (
 * @return
 *   Pointer to USART device
 ******************************************************************************/
-static rt_err_t miniStm32_usart_unit_init(struct miniStm32_usart_unit_init *init)
+static rt_err_t bsp_usart_unit_init(struct bsp_usart_unit_init *init)
 {
     rt_device_t             device;
-    struct miniStm32_usart_device *usart;
-    struct miniStm32_usart_dma_mode *dma_tx;
-    struct miniStm32_usart_int_mode *int_rx;
+    struct bsp_usart_device *usart;
+    struct bsp_usart_dma_mode *dma_tx;
+    struct bsp_usart_int_mode *int_rx;
     rt_uint32_t             flag;
     GPIO_InitTypeDef        gpio_init;
     USART_InitTypeDef       usart_init;
@@ -1248,8 +1248,8 @@ static rt_err_t miniStm32_usart_unit_init(struct miniStm32_usart_unit_init *init
 
     device = &(init->unit)->device;
     usart = &(init->unit)->usart;
-    dma_tx = (struct miniStm32_usart_dma_mode *)usart->tx_mode;
-    int_rx = (struct miniStm32_usart_int_mode *)usart->rx_mode;
+    dma_tx = (struct bsp_usart_dma_mode *)usart->tx_mode;
+    int_rx = (struct bsp_usart_int_mode *)usart->rx_mode;
     flag = RT_DEVICE_FLAG_RDWR;
 
     do
@@ -1421,7 +1421,7 @@ static rt_err_t miniStm32_usart_unit_init(struct miniStm32_usart_unit_init *init
                 init->name,
                 dma_tx->mem_pool,
                 sizeof(dma_tx->mem_pool),
-                sizeof(struct miniStm32_usart_dma_node)) != RT_EOK)
+                sizeof(struct bsp_usart_dma_node)) != RT_EOK)
             {
                 break;
             }
@@ -1444,7 +1444,7 @@ static rt_err_t miniStm32_usart_unit_init(struct miniStm32_usart_unit_init *init
             /* Config hook */
             hook.type       = miniStm32_irq_type_dma;
             hook.unit       = tx_chn - 1;
-            hook.cbFunc     = miniStm32_usart_dma_tx_isr;
+            hook.cbFunc     = bsp_usart_dma_tx_isr;
             hook.userPtr    = device;
             miniStm32_irq_hook_register(&hook);
 
@@ -1480,7 +1480,7 @@ static rt_err_t miniStm32_usart_unit_init(struct miniStm32_usart_unit_init *init
             /* Config hook */
             hook.type       = miniStm32_irq_type_usart;
             hook.unit       = init->number - 1;
-            hook.cbFunc     = miniStm32_usart_int_rx_isr;
+            hook.cbFunc     = bsp_usart_int_rx_isr;
             hook.userPtr    = device;
             miniStm32_irq_hook_register(&hook);
 
@@ -1508,12 +1508,12 @@ static rt_err_t miniStm32_usart_unit_init(struct miniStm32_usart_unit_init *init
         device->type        = RT_Device_Class_Char;
         device->rx_indicate = RT_NULL;
         device->tx_complete = RT_NULL;
-        device->init        = miniStm32_usart_init;
-        device->open        = miniStm32_usart_open;
-        device->close       = miniStm32_usart_close;
-        device->read        = miniStm32_usart_read;
-        device->write       = miniStm32_usart_write;
-        device->control     = miniStm32_usart_control;
+        device->init        = bsp_usart_init;
+        device->open        = bsp_usart_open;
+        device->close       = bsp_usart_close;
+        device->read        = bsp_usart_read;
+        device->write       = bsp_usart_write;
+        device->control     = bsp_usart_control;
         device->user_data   = (void *)usart;
 
         if (init->config & USART_CONFIG_CONSOLE)
@@ -1545,11 +1545,11 @@ static rt_err_t miniStm32_usart_unit_init(struct miniStm32_usart_unit_init *init
 ******************************************************************************/
 rt_err_t miniStm32_hw_usart_init(void)
 {
-    struct miniStm32_usart_unit_init init;
+    struct bsp_usart_unit_init init;
 
     do
     {
-#if (defined(USART1) && defined(MINISTM32_USING_USART1))
+#if (defined(USART1) && defined(BSP_USING_USART1))
         const rt_uint8_t name1[] = USART1_NAME;
 
         usart_tasks[0]          = &usart1.task;
@@ -1565,7 +1565,7 @@ rt_err_t miniStm32_hw_usart_init(void)
         init.frequency          = USART1_FREQUENCY;
         init.name               = &name1[0];
         init.unit               = &usart1;
-        if (miniStm32_usart_unit_init(&init) != RT_EOK)
+        if (bsp_usart_unit_init(&init) != RT_EOK)
         {
             break;
         }
@@ -1584,7 +1584,7 @@ rt_err_t miniStm32_hw_usart_init(void)
         }
 #endif
 
-#if (defined(USART2) && defined(MINISTM32_USING_USART2))
+#if (defined(USART2) && defined(BSP_USING_USART2))
         const rt_uint8_t name2[] = USART2_NAME;
 
         usart_tasks[1]          = &usart2.task;
@@ -1600,7 +1600,7 @@ rt_err_t miniStm32_hw_usart_init(void)
         init.frequency          = USART2_FREQUENCY;
         init.name               = &name2[0];
         init.unit               = &usart2;
-        if (miniStm32_usart_unit_init(&init) != RT_EOK)
+        if (bsp_usart_unit_init(&init) != RT_EOK)
         {
             break;
         }
@@ -1619,7 +1619,7 @@ rt_err_t miniStm32_hw_usart_init(void)
         }
 #endif
 
-#if (defined(USART3) && defined(MINISTM32_USING_USART3))
+#if (defined(USART3) && defined(BSP_USING_USART3))
         const rt_uint8_t name3[] = USART3_NAME;
 
         usart_tasks[2]          = &usart3.task;
@@ -1635,7 +1635,7 @@ rt_err_t miniStm32_hw_usart_init(void)
         init.frequency          = USART3_FREQUENCY;
         init.name               = &name3[0];
         init.unit               = &usart3;
-        if (miniStm32_usart_unit_init(&init) != RT_EOK)
+        if (bsp_usart_unit_init(&init) != RT_EOK)
         {
             break;
         }
@@ -1662,7 +1662,7 @@ rt_err_t miniStm32_hw_usart_init(void)
     return -RT_ERROR;
 }
 
-#endif /* (defined(MINISTM32_USING_USART1) || defined(MINISTM32_USING_USART2) || defined(MINISTM32_USING_USART3)) */
+#endif /* (defined(BSP_USING_USART1) || defined(BSP_USING_USART2) || defined(BSP_USING_USART3)) */
 /***************************************************************************//**
  * @}
  ******************************************************************************/

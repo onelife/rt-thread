@@ -25,15 +25,13 @@
 #include <board.h>
 
 #if defined(RT_USING_DFS)
-/* dfs init */
-//#include <dfs_init.h>
-/* dfs filesystem:ELM filesystem init */
-#include <dfs_elm.h>
 /* dfs Filesystem APIs */
 #include <dfs_fs.h>
 #endif
 
-#if defined(BOARD_USING_SPISD)
+#if defined(BSP_USING_SPISD)
+/* dfs filesystem:ELM filesystem init */
+#include <dfs_elm.h>
 #include "drv_sdcard.h"
 #endif
 #ifdef RT_USING_LWIP
@@ -42,16 +40,16 @@
 #include <netif/ethernetif.h>
 #endif
 
-#if 0 // defined(BOARD_USING_OLED)
+#if defined(RT_USING_GUIENGINE)
 //#include <rtgui/rtgui_server.h>
 //#include <rtgui/rtgui_system.h>
-#include <rtgui/rtgui_app.h>
-#include <rtgui/widgets/widget.h>
-#include <rtgui/widgets/label.h>
+//#include <rtgui/rtgui_app.h>
+//#include <rtgui/widgets/widget.h>
+//#include <rtgui/widgets/label.h>
 #include <rtgui/widgets/window.h>
-#include <rtgui/widgets/box.h>
+//#include <rtgui/widgets/box.h>
 #include <rtgui/image.h>
-#include <rtgui/video_mjpeg.h> 	// TESTING
+//#include <rtgui/video_mjpeg.h> 	// TESTING
 
  #if defined(RTGUI_USING_DFS_FILERW)
  #include <dfs_posix.h>
@@ -65,13 +63,13 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-#if 0 // defined(BOARD_USING_OLED)
+#if 0 //defined(BSP_USING_OLED)
 static rt_bool_t pic_view_event_handler(rtgui_object_t *object, rtgui_event_t *event)
 {
 	rt_bool_t result;
     rt_bool_t load = RT_FALSE;
 
-	result = rtgui_label_event_handler(object, event);
+	result = rtgui_win_event_handler(object, event);
 
     switch(event->type)
     {
@@ -83,19 +81,31 @@ static rt_bool_t pic_view_event_handler(rtgui_object_t *object, rtgui_event_t *e
     if (load)
 	{
 		struct rtgui_dc* dc;
-		rtgui_rect_t rect;
+		rtgui_rect_t rect, rect_text;
+        rtgui_color_t fc;
         rtgui_image_t* image;
 
-//        image = rtgui_image_create_from_file("jpg", "/test9.jpg", RT_FALSE);
-        image = rtgui_image_create_from_file("bmp", "/test_2.bmp", RT_FALSE);
-
-		dc = rtgui_dc_begin_drawing(RTGUI_WIDGET(object));
+        dc = rtgui_dc_begin_drawing(RTGUI_WIDGET(object));
 		if (dc == RT_NULL)
         {
             return result;
         }
+        rtgui_widget_get_rect(RTGUI_WIDGET(object), &rect);       
+        fc = RTGUI_DC_FC(dc);
+        
+        rect_text.x1 = rect.x1;
+        rect_text.y1 = rect.y1;
+        rect_text.x2 = rect.x2;
+        rect_text.y2 = rect.y1 + 12;
+        //RTGUI_DC_FC(dc) = RED;
+        rtgui_dc_draw_text(dc, "Hello world!", &rect);
+        //RTGUI_DC_FC(dc) = fc;
 
-        rtgui_widget_get_rect(RTGUI_WIDGET(object), &rect);
+#   if defined(BSP_USING_SPISD)
+//        image = rtgui_image_create_from_file("jpg", "/test9.jpg", RT_FALSE);
+        image = rtgui_image_create_from_file("bmp", "/test_2.bmp", RT_FALSE);
+
+
  //       rtgui_widget_rect_to_device(widget, &rect);
         rect.x1 +=10;
         rect.y1 +=10;
@@ -109,8 +119,9 @@ static rt_bool_t pic_view_event_handler(rtgui_object_t *object, rtgui_event_t *e
         {
             rt_kprintf("APP err: no image found!\n");
         }
+#   endif
 
-		rtgui_dc_end_drawing(dc);
+		rtgui_dc_end_drawing(dc, RT_TRUE);
 	}
 
 	return result;
@@ -133,22 +144,15 @@ static void app_oled(void *parameter)
 
 	/* create app */
 	struct rtgui_app *app;
-	app = rtgui_app_create(rt_thread_self(), "oled_app");
+	app = rtgui_app_create("app");
 	if (app == RT_NULL)
     {
         rt_kprintf("Create app \"oled_app\" failed!\n");
         return;
     }
 
-	struct rtgui_rect rect;
-    struct rtgui_win *win;
-    struct rtgui_label* label;
-
-	rtgui_graphic_driver_get_rect(rtgui_graphic_driver_get_default(), &rect);
-
     /* create window */
-	win = rtgui_win_create(RT_NULL, "main",
-                    &rect,
+	struct rtgui_win *win = rtgui_mainwin_create(RT_NULL, "main",
                     RTGUI_WIN_STYLE_NO_BORDER | RTGUI_WIN_STYLE_NO_TITLE);
 	if (win == RT_NULL)
 	{
@@ -157,28 +161,13 @@ static void app_oled(void *parameter)
         return;
 	}
 
-    /* create lable in window */
-	label = rtgui_label_create("¹þÂÞ,íïÅÖ!");
-    if (label == RT_NULL)
-    {
-        rt_kprintf("Create lable failed!\n");
-        return;
-    }
-
-	RTGUI_WIDGET_TEXTALIGN(RTGUI_WIDGET(label)) = RTGUI_ALIGN_LEFT;
-	RTGUI_WIDGET_BACKGROUND(RTGUI_WIDGET(label)) = black;
-    RTGUI_WIDGET_FOREGROUND(RTGUI_WIDGET(label)) = white;
-
-	rtgui_widget_set_rect(RTGUI_WIDGET(label), &rect);
-    rtgui_container_add_child(RTGUI_CONTAINER(win), RTGUI_WIDGET(label));
-    rtgui_object_set_event_handler(RTGUI_OBJECT(label), pic_view_event_handler);
-
+    rtgui_object_set_event_handler(RTGUI_OBJECT(win), pic_view_event_handler);
+    rtgui_app_run(app);
     rtgui_win_show(win, RT_FALSE);
 
-    rtgui_app_run(app);
     rtgui_app_destroy(app);
 }
-#elif defined(BOARD_USING_OLED)
+#elif defined(BSP_USING_OLED)
 static void app_oled(void *parameter)
 {
     /* find lcd device */
@@ -211,7 +200,7 @@ void rt_demo_thread_entry(void* parameter)
         /* init the elm chan FatFs filesystam*/
         elm_init();
 
-  #if defined(BOARD_USING_SPISD)
+  #if defined(BSP_USING_SPISD)
         /* mount sd card fat partition 1 as root directory */
         if (dfs_mount(SPISD_DEVICE_NAME, "/", "elm", 0, 0) == 0)
         {
@@ -227,7 +216,7 @@ void rt_demo_thread_entry(void* parameter)
     } while (0);
 #endif
 
-#if defined(BOARD_USING_OLED)
+#if defined(BSP_USING_OLED)
 {
     rt_kprintf("OLED DEMO start...\n");
 
@@ -265,7 +254,7 @@ int rt_application_init()
 {
     rt_thread_t demo_thread;
 
-#if defined(BOARD_USING_SPISD)
+#if defined(BSP_USING_SPISD)
     if (miniStm32_hw_spiSd_init() != RT_EOK)
     {
         rt_kprintf("INIT: Init SD card driver failed!");

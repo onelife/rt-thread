@@ -1,24 +1,23 @@
 import rtconfig
-Import('RTT_ROOT')
 from building import *
+Import('RTT_ROOT')
 
-# Common bsp files
+
 src_bsp = ['application.c', 'startup.c', 'board.c']
 src_drv = ['drv_rtc.c', 'drv_usart.c', 'drv_spi.c']
 src_hdl = ['hdl_interrupt.c']
 
 # Optional bsp files
-if GetDepend('BOARD_USING_LED1') or GetDepend('BOARD_USING_LED2'):
+if GetDepend('BSP_USING_LED1') or GetDepend('BSP_USING_LED2'):
     src_drv.append('drv_led.c')
-if GetDepend('BOARD_USING_OLED'):
+if GetDepend('BSP_USING_OLED'):
     src_drv.append('drv_oled.c')
-if GetDepend('BOARD_USING_SPISD'):
+if GetDepend('BSP_USING_SPISD'):
     src_drv.append('drv_sdcard.c')
 
 
-src = src_bsp + src_drv + src_hdl
-CPPPATH = [ GetCurrentDir(), '../../components/drivers/include' ]
-CPPDEFINES = []
-group = DefineGroup('Startup', src, depend = [''], CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES)
+headers = [ GetCurrentDir(), '../../components/drivers/include' ]
+sources = src_bsp + src_drv + src_hdl
+group = DefineGroup('Startup', src=sources, depend=[''], CPPPATH=headers)
 
 Return('group')

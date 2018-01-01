@@ -102,8 +102,8 @@ void rt_hw_board_init(void)
 void rt_hw_driver_init(void)
 {
     /* Initialize USART */
-#if (defined(MINISTM32_USING_USART1) || defined(MINISTM32_USING_USART2) || \
-    defined(MINISTM32_USING_USART3))
+#if (defined(BSP_USING_USART1) || defined(BSP_USING_USART2) || \
+    defined(BSP_USING_USART3))
     miniStm32_hw_usart_init();
 #endif
 
@@ -111,25 +111,25 @@ void rt_hw_driver_init(void)
     rt_console_set_device(CONSOLE_DEVICE);
 
     /* Initialize SPI */
-#if (defined(MINISTM32_USING_SPI1) || defined(MINISTM32_USING_SPI2) || \
-    defined(MINISTM32_USING_SPI3))
+#if (defined(BSP_USING_SPI1) || defined(BSP_USING_SPI2) || \
+    defined(BSP_USING_SPI3))
     miniStm32_hw_spi_init();
 #endif
 
     /* Initialize LED */
-#if (defined(BOARD_USING_LED1) || defined(BOARD_USING_LED2))
+#if (defined(BSP_USING_LED1) || defined(BSP_USING_LED2))
 	board_hw_led_init();
 #endif
 
     /* Initialize OLED */
-#if defined(BOARD_USING_OLED)
+#if defined(BSP_USING_OLED)
 #if (OLED_DEVICE_INTERFACE == INTERFACE_8BIT_80XX)
     miniStm32_hw_oled_init();
 #endif
 #endif
 
     /* Initialize RTC */
-#if defined(MINISTM32_USING_RTC)
+#if defined(BSP_USING_RTC)
     miniStm32_hw_rtc_init();
 #endif
 }
@@ -146,14 +146,14 @@ void rt_hw_driver_init(void)
 void rt_hw_driver2_init(void)
 {
     /* Initialize OLED 2 */
-#if defined(BOARD_USING_OLED)
+#if defined(BSP_USING_OLED)
 #if (OLED_DEVICE_INTERFACE == INTERFACE_4WIRE_SPI)
     miniStm32_hw_oled_init();
 #endif
 #endif
 
     /* Initialize SD card */
-#if defined(BOARD_USING_SPISD)
+#if defined(BSP_USING_SPISD)
 //    miniStm32_hw_spiSd_init();
 #endif
 }

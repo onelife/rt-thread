@@ -107,17 +107,11 @@ void rtthread_startup(void)
     /* init first level drivers */
     rt_hw_driver_init();
 
-	/* init all device */
-	rt_device_init_all();
-
 	/* show version */
 	rt_show_version();
 
     /* init second level drivers */
     rt_hw_driver2_init();
-
-	/* init all device again */
-	rt_device_init_all();
 
     /* init finsh */
 #ifdef RT_USING_FINSH
@@ -126,7 +120,7 @@ void rtthread_startup(void)
 #endif
 
     /* Initialize gui server */
-#ifdef RT_USING_RTGUI
+#ifdef RT_USING_GUIENGINE
     rtgui_system_server_init();
 #endif
 

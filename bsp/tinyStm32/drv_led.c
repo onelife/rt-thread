@@ -24,14 +24,14 @@
 #include "board.h"
 #include "hdl_interrupt.h"
 #include "drv_led.h"
-#if (defined(BOARD_USING_LED1) || defined(BOARD_USING_LED2))
+#if (defined(BSP_USING_LED1) || defined(BSP_USING_LED2))
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#if (defined(BOARD_USING_LED1))
+#if (defined(BSP_USING_LED1))
 static struct board_led_unit_struct led1;
 #endif
 
-#if (defined(BOARD_USING_LED2))
+#if (defined(BSP_USING_LED2))
 static struct board_led_unit_struct led2;
 #endif
 
@@ -197,7 +197,7 @@ static rt_err_t board_led_unit_init(struct board_led_unit_init *init)
 				led->pin = LED1_PIN;
             }
             break;
-#if defined(BOARD_USING_LED2)
+#if defined(BSP_USING_LED2)
         case 2:
             {
             	RCC_APB2PeriphClockCmd(LED2_CLOCK, ENABLE);
@@ -247,7 +247,7 @@ rt_err_t board_hw_led_init(void)
 
 	do
 	{
-#if (defined(BOARD_USING_LED1))
+#if (defined(BSP_USING_LED1))
 		const rt_uint8_t name[] = LED1_NAME;
 
 		init.number         = 1;
@@ -259,7 +259,7 @@ rt_err_t board_hw_led_init(void)
 		}
 #endif
 
-#if (defined(BOARD_USING_LED2))
+#if (defined(BSP_USING_LED2))
 		const rt_uint8_t name[] = LED2_NAME;
 
 		init.number         = 2;
@@ -310,7 +310,7 @@ void led(rt_uint32_t led, rt_int32_t value)
     case 1:
     	led1.device.control(&led1.device, cmd, RT_NULL);
         break;
-#if defined(BOARD_USING_LED2)
+#if defined(BSP_USING_LED2)
     case 2:
     	led2.device.control(&led1.device, cmd, RT_NULL);
         break;
@@ -322,7 +322,7 @@ void led(rt_uint32_t led, rt_int32_t value)
 FINSH_FUNCTION_EXPORT(led, set led[1 - x] on[1] or off[0] or toggle[-1].)
 #endif
 
-#endif /* (defined(BOARD_USING_LED1) || defined(BOARD_USING_LED2)) */
+#endif /* (defined(BSP_USING_LED1) || defined(BSP_USING_LED2)) */
 /***************************************************************************//**
  * @}
  ******************************************************************************/

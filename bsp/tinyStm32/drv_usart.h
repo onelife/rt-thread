@@ -58,7 +58,7 @@ s ******************************************************************************
 #define USART_COMMAND_WAIT_TIME         (RT_TICK_PER_SECOND / 10)
 
 /* Exported types ------------------------------------------------------------*/
-struct miniStm32_usart_device
+struct bsp_usart_device
 {
     rt_uint8_t              counter;
     rt_uint8_t              number;
@@ -69,7 +69,7 @@ struct miniStm32_usart_device
     struct rt_semaphore     lock;
 };
 
-struct miniStm32_usart_cmd_message
+struct bsp_usart_cmd_message
 {
     rt_uint32_t             cmd;
     rt_uint32_t             other;
@@ -77,7 +77,7 @@ struct miniStm32_usart_cmd_message
     rt_uint8_t              *ptr;
 };
 
-struct miniStm32_usart_ret_message
+struct bsp_usart_ret_message
 {
     rt_uint32_t             cmd;
     rt_uint32_t             other;
@@ -85,13 +85,13 @@ struct miniStm32_usart_ret_message
     rt_err_t                ret;
 };
 
-union miniStm32_usart_exec_message
+union bsp_usart_exec_message
 {
-    struct miniStm32_usart_cmd_message cmd;
-    struct miniStm32_usart_ret_message ret;
+    struct bsp_usart_cmd_message cmd;
+    struct bsp_usart_ret_message ret;
 };
 
-struct miniStm32_usart_task_struct
+struct bsp_usart_task_struct
 {
     struct rt_thread        thread;
     struct rt_messagequeue  rx_msgs;
@@ -101,46 +101,46 @@ struct miniStm32_usart_task_struct
                                 (USART_RX_MESSAGE_SIZE + 4)];
 };
 
-struct miniStm32_usart_unit_struct
+struct bsp_usart_unit_struct
 {
-    struct miniStm32_usart_task_struct task;
+    struct bsp_usart_task_struct task;
     struct rt_device        device;
-    struct miniStm32_usart_device usart;
+    struct bsp_usart_device usart;
 };
 
-struct miniStm32_usart_unit_init
+struct bsp_usart_unit_init
 {
     rt_uint8_t              number;
     rt_uint32_t             config;
     rt_uint32_t             frequency;
     const rt_uint8_t        *name;
-    struct miniStm32_usart_unit_struct *unit;
+    struct bsp_usart_unit_struct *unit;
 };
 
-struct miniStm32_usart_int_mode
+struct bsp_usart_int_mode
 {
     rt_uint8_t              buffer[USART_INT_RX_BUFFER_SIZE];
     rt_uint32_t             read_index, save_index;
 };
 
-struct miniStm32_usart_dma_node
+struct bsp_usart_dma_node
 {
     /* buffer info */
     rt_uint32_t             *data_ptr;
     rt_uint16_t             data_size;
 
-    struct miniStm32_usart_dma_node *next, *prev;
+    struct bsp_usart_dma_node *next, *prev;
 };
 
-struct miniStm32_usart_dma_mode
+struct bsp_usart_dma_mode
 {
     DMA_Channel_TypeDef     *dma_chn;
-    struct miniStm32_usart_dma_node *list_head, *list_tail;
+    struct bsp_usart_dma_node *list_head, *list_tail;
 
     /* Memory pool */
     struct rt_mempool       dma_mp;
     rt_uint8_t              mem_pool[USART_DMA_QUEUE_SIZE * \
-                                (sizeof(struct miniStm32_usart_dma_node) + 4)];
+                                (sizeof(struct bsp_usart_dma_node) + 4)];
 };
 
 /* Exported constants --------------------------------------------------------*/

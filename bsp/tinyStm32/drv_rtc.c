@@ -23,7 +23,7 @@
 #include "board.h"
 #include "hdl_interrupt.h"
 #include "drv_rtc.h"
-#if defined(MINISTM32_USING_RTC)
+#if defined(BSP_USING_RTC)
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -366,7 +366,7 @@ void list_date(void)
 FINSH_FUNCTION_EXPORT(list_date, show date and time.)
 #endif
 
-#endif /* defined(MINISTM32_USING_RTC) */
+#endif /* defined(BSP_USING_RTC) */
 /***************************************************************************//**
  * @}
  ******************************************************************************/

@@ -47,7 +47,7 @@
 #define SPI_RX_BUFFER_SIZE		        (64)
 
 /* SECTION: OLED */
-#if defined(BOARD_USING_OLED)
+#if defined(BSP_USING_OLED)
 #define OLED_CS_CLOCK                   (RCC_APB2Periph_GPIOB)
 #define OLED_CS_PORT                    (GPIOB)
 #define OLED_CS_PIN                     (GPIO_Pin_12)
@@ -57,7 +57,7 @@
 #endif
 
 /* SECTION: Micro SD */
-#if defined(BOARD_USING_SPISD)
+#if defined(BSP_USING_SPISD)
 #define SD_CS_CLOCK                     (RCC_APB2Periph_GPIOB)
 #define SD_CS_PORT                      (GPIOB)
 #define SD_CS_PIN                       (GPIO_Pin_0)
@@ -100,11 +100,11 @@
 #define RT_DEVICE_OFLAG_NONBLOCKING         (0x1000)
 /*! fixme: The above defines should be moved to Rtdef.h */
 
-#if (defined(MINISTM32_USING_USART1) && (USART1_USART_MODE & MINISTM32_USART_CONSOLE) )
+#if (defined(BSP_USING_USART1) && (USART1_USART_MODE & BSP_USART_CONSOLE) )
 #define CONSOLE_DEVICE 				    USART1_NAME
-#elif (defined(MINISTM32_USING_USART2) && (USART2_USART_MODE & MINISTM32_USART_CONSOLE))
+#elif (defined(BSP_USING_USART2) && (USART2_USART_MODE & BSP_USART_CONSOLE))
 #define CONSOLE_DEVICE 				    USART2_NAME
-#elif (defined(MINISTM32_USING_USART3) && (USART3_USART_MODE & MINISTM32_USART_CONSOLE))
+#elif (defined(BSP_USING_USART3) && (USART3_USART_MODE & BSP_USART_CONSOLE))
 #define CONSOLE_DEVICE 				    USART3_NAME
 #else
 #define CONSOLE_DEVICE 				    "NONE"

@@ -26,7 +26,7 @@
 #include "board.h"
 #include "hdl_interrupt.h"
 #include "drv_spi.h"
-#if (defined(MINISTM32_USING_SPI1) || defined(MINISTM32_USING_SPI2) || defined(MINISTM32_USING_SPI3))
+#if (defined(BSP_USING_SPI1) || defined(BSP_USING_SPI2) || defined(BSP_USING_SPI3))
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define SPI1_DR_Base                        (SPI1_BASE + 0x0C)
@@ -55,33 +55,33 @@
 #define DMA2_Channel_SPI3_RX_IRQn           (DMA2_Channel1_IRQn)
 
 /* Private macro -------------------------------------------------------------*/
-#ifdef MINISTM32_SPI_DEBUG
+#ifdef BSP_SPI_DEBUG
 #define spi_debug(format,args...)           rt_kprintf(format, ##args)
 #else
 #define spi_debug(format,args...)
 #endif
 
 /* Private variables ---------------------------------------------------------*/
-static struct miniStm32_spi_task_struct *spi_tasks[3];
+static struct bsp_spi_task_struct *spi_tasks[3];
 
-#if (defined(RCC_APB2ENR_SPI1EN) || defined(MINISTM32_USING_SPI1))
-static struct miniStm32_spi_unit_struct spi1;
+#if (defined(RCC_APB2ENR_SPI1EN) || defined(BSP_USING_SPI1))
+static struct bsp_spi_unit_struct spi1;
  #if (SPI1_SPI_MODE & SPI_CONFIG_DMA_TX)
- static struct miniStm32_spi_dma_mode spi1_dma_tx;
+ static struct bsp_spi_dma_mode spi1_dma_tx;
  #endif
 #endif
 
-#if (defined(RCC_APB1ENR_SPI2EN) || defined(MINISTM32_USING_SPI2))
-static struct miniStm32_spi_unit_struct spi2;
+#if (defined(RCC_APB1ENR_SPI2EN) || defined(BSP_USING_SPI2))
+static struct bsp_spi_unit_struct spi2;
  #if (SPI2_SPI_MODE & SPI_CONFIG_DMA_TX)
- static struct miniStm32_spi_dma_mode spi2_dma_tx;
+ static struct bsp_spi_dma_mode spi2_dma_tx;
  #endif
 #endif
 
-#if (defined(RCC_APB1ENR_SPI3EN) || defined(MINISTM32_USING_SPI3))
-static struct miniStm32_spi_unit_struct spi3;
+#if (defined(RCC_APB1ENR_SPI3EN) || defined(BSP_USING_SPI3))
+static struct bsp_spi_unit_struct spi3;
  #if (SPI3_SPI_MODE & SPI_CONFIG_DMA_TX)
- static struct miniStm32_spi_dma_mode spi3_dma_tx;
+ static struct bsp_spi_dma_mode spi3_dma_tx;
  #endif
 #endif
 
@@ -98,15 +98,15 @@ static struct miniStm32_spi_unit_struct spi3;
  * @param[in] dev
  *  Pointer to device descriptor
  ******************************************************************************/
-void miniStm32_spi_dma_tx_isr(rt_device_t dev)
+void bsp_spi_dma_tx_isr(rt_device_t dev)
 {
-    struct miniStm32_spi_device *spi;
-    struct miniStm32_spi_dma_mode *dma_tx;
-    struct miniStm32_spi_dma_node *dma_node;
+    struct bsp_spi_device *spi;
+    struct bsp_spi_dma_mode *dma_tx;
+    struct bsp_spi_dma_node *dma_node;
     rt_uint32_t level;
 
-    spi = (struct miniStm32_spi_device *)dev->user_data;
-    dma_tx = (struct miniStm32_spi_dma_mode *)spi->tx_mode;
+    spi = (struct bsp_spi_device *)dev->user_data;
+    dma_tx = (struct bsp_spi_dma_mode *)spi->tx_mode;
     dma_node = dma_tx->list_head;
 
     RT_ASSERT((dev->flag & RT_DEVICE_FLAG_DMA_TX) && (dma_node != RT_NULL));
@@ -147,19 +147,19 @@ void miniStm32_spi_dma_tx_isr(rt_device_t dev)
     }
 }
 
-static rt_err_t miniStm32_spi_dma_tx(
-    struct miniStm32_spi_device *spi,
+static rt_err_t bsp_spi_dma_tx(
+    struct bsp_spi_device *spi,
     rt_uint32_t *buffer,
     rt_uint16_t size)
 {
-    struct miniStm32_spi_dma_mode *dma_tx;
-    struct miniStm32_spi_dma_node *dma_node;
+    struct bsp_spi_dma_mode *dma_tx;
+    struct bsp_spi_dma_node *dma_node;
     rt_uint32_t level;
 
-    dma_tx = (struct miniStm32_spi_dma_mode *)spi->tx_mode;
+    dma_tx = (struct bsp_spi_dma_mode *)spi->tx_mode;
 
     /* Allocate a data node */
-    dma_node = (struct miniStm32_spi_dma_node *)rt_mp_alloc(
+    dma_node = (struct bsp_spi_dma_node *)rt_mp_alloc(
             &(dma_tx->dma_mp), RT_WAITING_FOREVER);
     if (dma_node == RT_NULL)
     {
@@ -214,15 +214,15 @@ static rt_err_t miniStm32_spi_dma_tx(
  * @param[in] dev
  *  Pointer to device descriptor
  ******************************************************************************/
-void miniStm32_spi_rx_isr(rt_device_t dev)
+void bsp_spi_rx_isr(rt_device_t dev)
 {
-    struct miniStm32_spi_device     *spi;
-    struct miniStm32_spi_int_mode   *int_rx;
+    struct bsp_spi_device     *spi;
+    struct bsp_spi_int_mode   *int_rx;
 
     /* interrupt mode receive */
     RT_ASSERT(dev->flag & RT_DEVICE_FLAG_INT_RX);
-    spi = (struct miniStm32_spi_device *)(dev->user_data);
-    int_rx = (struct miniStm32_spi_int_mode *)(spi->rx_mode);
+    spi = (struct bsp_spi_device *)(dev->user_data);
+    int_rx = (struct bsp_spi_int_mode *)(spi->rx_mode);
 
     /* Set status */
     spi->status |= SPI_STATUS_RX_BUSY;
@@ -289,7 +289,7 @@ void miniStm32_spi_rx_isr(rt_device_t dev)
  *   Error code
  ******************************************************************************/
 static rt_err_t spi_task_exec(rt_uint8_t number,
-    union miniStm32_spi_exec_message *exec_msg,
+    union bsp_spi_exec_message *exec_msg,
     rt_bool_t nonblock)
 {
     rt_err_t ret;
@@ -343,8 +343,8 @@ static rt_err_t spi_task_exec(rt_uint8_t number,
     return ret;
 }
 
-static void spi_task_open(struct miniStm32_spi_unit_struct *cfg,
-   union miniStm32_spi_exec_message *exec_msg)
+static void spi_task_open(struct bsp_spi_unit_struct *cfg,
+   union bsp_spi_exec_message *exec_msg)
 {
     RT_ASSERT(cfg != RT_NULL);
 
@@ -370,8 +370,8 @@ static void spi_task_open(struct miniStm32_spi_unit_struct *cfg,
     exec_msg->ret.ret = RT_EOK;
 }
 
-static void spi_task_close(struct miniStm32_spi_unit_struct *cfg,
-    union miniStm32_spi_exec_message *exec_msg)
+static void spi_task_close(struct bsp_spi_unit_struct *cfg,
+    union bsp_spi_exec_message *exec_msg)
 {
     RT_ASSERT(cfg != RT_NULL);
 
@@ -380,8 +380,8 @@ static void spi_task_close(struct miniStm32_spi_unit_struct *cfg,
     exec_msg->ret.ret = RT_EOK;
 }
 
-static void spi_task_read(struct miniStm32_spi_unit_struct *cfg,
-    union miniStm32_spi_exec_message *exec_msg)
+static void spi_task_read(struct bsp_spi_unit_struct *cfg,
+    union bsp_spi_exec_message *exec_msg)
 {
     RT_ASSERT(cfg != RT_NULL);
 
@@ -467,8 +467,8 @@ static void spi_task_read(struct miniStm32_spi_unit_struct *cfg,
     exec_msg->ret.ret = RT_EOK;
 }
 
-static void spi_task_write(struct miniStm32_spi_unit_struct *cfg,
-    union miniStm32_spi_exec_message *exec_msg)
+static void spi_task_write(struct bsp_spi_unit_struct *cfg,
+    union bsp_spi_exec_message *exec_msg)
 {
     RT_ASSERT(cfg != RT_NULL);
 
@@ -518,7 +518,7 @@ static void spi_task_write(struct miniStm32_spi_unit_struct *cfg,
     {
         /* DMA mode */
         spi_debug("SPI%d: DMA TX DATA\n", cfg->spi.number);
-        exec_msg->ret.ret = miniStm32_spi_dma_tx(&cfg->spi,
+        exec_msg->ret.ret = bsp_spi_dma_tx(&cfg->spi,
             (rt_uint32_t *)ptr,
             (rt_uint16_t)len);
         if (exec_msg->ret.ret != RT_EOK)
@@ -544,8 +544,8 @@ static void spi_task_write(struct miniStm32_spi_unit_struct *cfg,
     }
 }
 
-static void spi_task_control(struct miniStm32_spi_unit_struct *cfg,
-    union miniStm32_spi_exec_message *exec_msg)
+static void spi_task_control(struct bsp_spi_unit_struct *cfg,
+    union bsp_spi_exec_message *exec_msg)
 {
     RT_ASSERT(cfg != RT_NULL);
 
@@ -622,12 +622,12 @@ static void spi_task_control(struct miniStm32_spi_unit_struct *cfg,
 ******************************************************************************/
 void spi_task_main_loop(void *parameter)
 {
-    struct miniStm32_spi_unit_struct *cfg;
-    union miniStm32_spi_exec_message *p_exec_msg;
+    struct bsp_spi_unit_struct *cfg;
+    union bsp_spi_exec_message *p_exec_msg;
     rt_thread_t self;
     rt_bool_t chk_block;
 
-    cfg = (struct miniStm32_spi_unit_struct *)parameter;
+    cfg = (struct bsp_spi_unit_struct *)parameter;
     self = rt_thread_self();
 
     if (rt_mq_init(
@@ -728,11 +728,11 @@ SPI_MAIN_LOOP:
  * @return
  *   Error code
  ******************************************************************************/
-static rt_err_t miniStm32_spi_init (rt_device_t dev)
+static rt_err_t bsp_spi_init (rt_device_t dev)
 {
-    struct miniStm32_spi_device *spi;
+    struct bsp_spi_device *spi;
 
-    spi = (struct miniStm32_spi_device *)(dev->user_data);
+    spi = (struct bsp_spi_device *)(dev->user_data);
 
     return rt_thread_startup(&spi_tasks[spi->number - 1]->thread);
 }
@@ -754,12 +754,12 @@ static rt_err_t miniStm32_spi_init (rt_device_t dev)
  * @return
  *   Error code
  ******************************************************************************/
-static rt_err_t miniStm32_spi_open(rt_device_t dev, rt_uint16_t oflag)
+static rt_err_t bsp_spi_open(rt_device_t dev, rt_uint16_t oflag)
 {
-    struct miniStm32_spi_device *spi;
-    union miniStm32_spi_exec_message exec_msg;
+    struct bsp_spi_device *spi;
+    union bsp_spi_exec_message exec_msg;
 
-    spi = (struct miniStm32_spi_device *)(dev->user_data);
+    spi = (struct bsp_spi_device *)(dev->user_data);
 
     exec_msg.cmd.cmd = SPI_COMMAND_OPEN;
     exec_msg.cmd.other = oflag;
@@ -767,7 +767,7 @@ static rt_err_t miniStm32_spi_open(rt_device_t dev, rt_uint16_t oflag)
     if (!(spi->status & SPI_STATUS_START) && \
     (spi->status & SPI_STATUS_DIRECT_EXE))
     {
-        struct miniStm32_spi_unit_struct *cfg = RT_NULL;
+        struct bsp_spi_unit_struct *cfg = RT_NULL;
 
         switch (spi->number)
         {
@@ -810,17 +810,17 @@ static rt_err_t miniStm32_spi_open(rt_device_t dev, rt_uint16_t oflag)
  * @return
  *   Error code
  ******************************************************************************/
-static rt_err_t miniStm32_spi_close(rt_device_t dev)
+static rt_err_t bsp_spi_close(rt_device_t dev)
 {
-    struct miniStm32_spi_device *spi;
-    union miniStm32_spi_exec_message exec_msg;
+    struct bsp_spi_device *spi;
+    union bsp_spi_exec_message exec_msg;
 
-    spi = (struct miniStm32_spi_device *)(dev->user_data);
+    spi = (struct bsp_spi_device *)(dev->user_data);
 
     if (!(spi->status & SPI_STATUS_START) && \
     (spi->status & SPI_STATUS_DIRECT_EXE))
     {
-        struct miniStm32_spi_unit_struct *cfg = RT_NULL;
+        struct bsp_spi_unit_struct *cfg = RT_NULL;
 
         switch (spi->number)
         {
@@ -874,7 +874,7 @@ static rt_err_t miniStm32_spi_close(rt_device_t dev)
  * @return
  *  Number of read bytes
  ******************************************************************************/
-static rt_size_t miniStm32_spi_read (
+static rt_size_t bsp_spi_read (
     rt_device_t     dev,
     rt_off_t        pos,
     void            *buffer,
@@ -882,16 +882,16 @@ static rt_size_t miniStm32_spi_read (
 
 {
     rt_err_t    ret;
-    struct miniStm32_spi_device *spi;
-    union miniStm32_spi_exec_message exec_msg;
+    struct bsp_spi_device *spi;
+    union bsp_spi_exec_message exec_msg;
     rt_bool_t nonblock;
 
-    spi = (struct miniStm32_spi_device *)(dev->user_data);
+    spi = (struct bsp_spi_device *)(dev->user_data);
 
     if (!(spi->status & SPI_STATUS_START) && \
         (spi->status & SPI_STATUS_DIRECT_EXE))
     {
-        struct miniStm32_spi_unit_struct *cfg = RT_NULL;
+        struct bsp_spi_unit_struct *cfg = RT_NULL;
 
         switch (spi->number)
         {
@@ -925,7 +925,7 @@ static rt_size_t miniStm32_spi_read (
 
     do
     {
-        union miniStm32_spi_exec_message *p_exec_msg;
+        union bsp_spi_exec_message *p_exec_msg;
         
         exec_msg.cmd.cmd = SPI_COMMAND_STATUS;
         do
@@ -956,7 +956,7 @@ static rt_size_t miniStm32_spi_read (
         if (exec_msg.ret.other & SPI_STATUS_NONBLOCKING)
         {
             nonblock = RT_TRUE;
-            p_exec_msg = rt_malloc(sizeof(union miniStm32_spi_exec_message));
+            p_exec_msg = rt_malloc(sizeof(union bsp_spi_exec_message));
             if (p_exec_msg == RT_NULL)
             {
                 ret = RT_ENOMEM;
@@ -1032,7 +1032,7 @@ static rt_size_t miniStm32_spi_read (
  * @return
  *   Number of written bytes
  ******************************************************************************/
-static rt_size_t miniStm32_spi_write (
+static rt_size_t bsp_spi_write (
     rt_device_t     dev,
     rt_off_t        pos,
     const void*     buffer,
@@ -1040,16 +1040,16 @@ static rt_size_t miniStm32_spi_write (
 
 {
     rt_err_t    ret;
-    struct miniStm32_spi_device *spi;
-    union miniStm32_spi_exec_message exec_msg;
+    struct bsp_spi_device *spi;
+    union bsp_spi_exec_message exec_msg;
     rt_bool_t nonblock;
 
-    spi = (struct miniStm32_spi_device *)(dev->user_data);
+    spi = (struct bsp_spi_device *)(dev->user_data);
 
     if (!(spi->status & SPI_STATUS_START) && \
         (spi->status & SPI_STATUS_DIRECT_EXE))
     {
-        struct miniStm32_spi_unit_struct *cfg = RT_NULL;
+        struct bsp_spi_unit_struct *cfg = RT_NULL;
 
         switch (spi->number)
         {
@@ -1083,7 +1083,7 @@ static rt_size_t miniStm32_spi_write (
 
     do
     {
-        union miniStm32_spi_exec_message *p_exec_msg;
+        union bsp_spi_exec_message *p_exec_msg;
     
         exec_msg.cmd.cmd = SPI_COMMAND_STATUS;
         do
@@ -1114,7 +1114,7 @@ static rt_size_t miniStm32_spi_write (
         if (exec_msg.ret.other & SPI_STATUS_NONBLOCKING)
         {
             nonblock = RT_TRUE;
-            p_exec_msg = rt_malloc(sizeof(union miniStm32_spi_exec_message));
+            p_exec_msg = rt_malloc(sizeof(union bsp_spi_exec_message));
             if (p_exec_msg == RT_NULL)
             {
                 ret = RT_ENOMEM;
@@ -1187,21 +1187,21 @@ static rt_size_t miniStm32_spi_write (
 * @return
 *   Error code
 ******************************************************************************/
-static rt_err_t miniStm32_spi_control (
+static rt_err_t bsp_spi_control (
     rt_device_t     dev,
     rt_uint8_t      cmd,
     void            *args)
 {
     rt_err_t ret;
-    struct miniStm32_spi_device *spi;
-    union miniStm32_spi_exec_message exec_msg;
+    struct bsp_spi_device *spi;
+    union bsp_spi_exec_message exec_msg;
 
-    spi = (struct miniStm32_spi_device *)(dev->user_data);
+    spi = (struct bsp_spi_device *)(dev->user_data);
 
     if (!(spi->status & SPI_STATUS_START) && \
     (spi->status & SPI_STATUS_DIRECT_EXE))
     {
-        struct miniStm32_spi_unit_struct *cfg = RT_NULL;
+        struct bsp_spi_unit_struct *cfg = RT_NULL;
 
         switch (spi->number)
         {
@@ -1281,11 +1281,11 @@ static rt_err_t miniStm32_spi_control (
 * @return
 *   Pointer to SPI device
 ******************************************************************************/
-static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
+static rt_err_t bsp_spi_unit_init(struct bsp_spi_unit_init *init)
 {
     rt_device_t         device;
-    struct miniStm32_spi_device *spi;
-    struct miniStm32_spi_dma_mode *dma_tx, *dma_rx;
+    struct bsp_spi_device *spi;
+    struct bsp_spi_dma_mode *dma_tx, *dma_rx;
     rt_uint32_t         flag;
     GPIO_InitTypeDef    gpio_init;
     SPI_InitTypeDef     spi_init;
@@ -1299,7 +1299,7 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
 
     device = &(init->unit)->device;
     spi = &(init->unit)->spi;
-    dma_tx = (struct miniStm32_spi_dma_mode *)spi->tx_mode;
+    dma_tx = (struct bsp_spi_dma_mode *)spi->tx_mode;
     flag = RT_DEVICE_FLAG_RDWR;
 
     do
@@ -1518,7 +1518,7 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
                 init->name,
                 dma_tx->mem_pool,
                 sizeof(dma_tx->mem_pool),
-                sizeof(struct miniStm32_spi_dma_node)) != RT_EOK)
+                sizeof(struct bsp_spi_dma_node)) != RT_EOK)
             {
                 break;
             }
@@ -1541,7 +1541,7 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
             /* Config hook */
             hook.type       = miniStm32_irq_type_dma;
             hook.unit       = tx_chn - 1;
-            hook.cbFunc     = miniStm32_spi_dma_tx_isr;
+            hook.cbFunc     = bsp_spi_dma_tx_isr;
             hook.userPtr    = device;
             miniStm32_irq_hook_register(&hook);
 
@@ -1577,7 +1577,7 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
             // TODO: slave mode
 /*            flag |= RT_DEVICE_FLAG_INT_RX;
 
-            spi->rx_mode = rt_malloc(sizeof(struct miniStm32_spi_int_mode));
+            spi->rx_mode = rt_malloc(sizeof(struct bsp_spi_int_mode));
             if (spi->rx_mode == RT_NULL)
             {
                 spi_debug("SPI%d err: no mem for INT RX\n", spi->unit);
@@ -1586,7 +1586,7 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
 
             hook.type           = miniStm32_irq_type_spi;
             hook.unit           = unitNumber - 1;
-            hook.cbFunc         = miniStm32_spi_rx_isr;
+            hook.cbFunc         = bsp_spi_rx_isr;
             hook.userPtr        = device;
             miniStm32_irq_hook_register(&hook);
 */
@@ -1596,12 +1596,12 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
         device->type        = RT_Device_Class_SPIBUS;
         device->rx_indicate = RT_NULL;
         device->tx_complete = RT_NULL;
-        device->init        = miniStm32_spi_init;
-        device->open        = miniStm32_spi_open;
-        device->close       = miniStm32_spi_close;
-        device->read        = miniStm32_spi_read;
-        device->write       = miniStm32_spi_write;
-        device->control     = miniStm32_spi_control;
+        device->init        = bsp_spi_init;
+        device->open        = bsp_spi_open;
+        device->close       = bsp_spi_close;
+        device->read        = bsp_spi_read;
+        device->write       = bsp_spi_write;
+        device->control     = bsp_spi_control;
         device->user_data   = (void *)spi;
 
         if (init->config & SPI_CONFIG_DMA_TX)
@@ -1624,11 +1624,11 @@ static rt_err_t miniStm32_spi_unit_init(struct miniStm32_spi_unit_init *init)
 ******************************************************************************/
 rt_err_t miniStm32_hw_spi_init(void)
 {
-    struct miniStm32_spi_unit_init init;
+    struct bsp_spi_unit_init init;
 
     do
     {
-#if (defined(RCC_APB2ENR_SPI1EN) && defined(MINISTM32_USING_SPI1))
+#if (defined(RCC_APB2ENR_SPI1EN) && defined(BSP_USING_SPI1))
         const rt_uint8_t name[] = SPI1_NAME;
 
         spi_tasks[0]        = &spi1.task;
@@ -1640,7 +1640,7 @@ rt_err_t miniStm32_hw_spi_init(void)
         init.config         = SPI1_SPI_MODE;
         init.name           = &name[0];
         init.unit           = &spi1;
-        if (miniStm32_spi_unit_init(&init) != RT_EOK)
+        if (bsp_spi_unit_init(&init) != RT_EOK)
         {
             break;
         }
@@ -1659,7 +1659,7 @@ rt_err_t miniStm32_hw_spi_init(void)
         }
 #endif
 
-#if (defined(RCC_APB1ENR_SPI2EN) && defined(MINISTM32_USING_SPI2))
+#if (defined(RCC_APB1ENR_SPI2EN) && defined(BSP_USING_SPI2))
         const rt_uint8_t name[] = SPI2_NAME;
 
         spi_tasks[1]        = &spi2.task;
@@ -1671,7 +1671,7 @@ rt_err_t miniStm32_hw_spi_init(void)
         init.config         = SPI2_SPI_MODE;
         init.name           = &name[0];
         init.unit           = &spi2;
-        if (miniStm32_spi_unit_init(&init) != RT_EOK)
+        if (bsp_spi_unit_init(&init) != RT_EOK)
         {
             break;
         }
@@ -1690,7 +1690,7 @@ rt_err_t miniStm32_hw_spi_init(void)
         }
 #endif
 
-#if (defined(RCC_APB1ENR_SPI3EN) && defined(MINISTM32_USING_SPI3))
+#if (defined(RCC_APB1ENR_SPI3EN) && defined(BSP_USING_SPI3))
         const rt_uint8_t name[] = SPI3_NAME;
 
         spi_tasks[2]        = &spi3.task;
@@ -1702,7 +1702,7 @@ rt_err_t miniStm32_hw_spi_init(void)
         init.config         = SPI3_SPI_MODE;
         init.name           = &name[0];
         init.unit           = &spi3;
-        if (miniStm32_spi_unit_init(&init) != RT_EOK)
+        if (bsp_spi_unit_init(&init) != RT_EOK)
         {
             break;
         }
@@ -1729,7 +1729,7 @@ rt_err_t miniStm32_hw_spi_init(void)
     return -RT_ERROR;
 }
 
-#endif /* (defined(MINISTM32_USING_SPI1) || defined(MINISTM32_USING_SPI2) || defined(MINISTM32_USING_SPI3)) */
+#endif /* (defined(BSP_USING_SPI1) || defined(BSP_USING_SPI2) || defined(BSP_USING_SPI3)) */
 /***************************************************************************//**
  * @}
  ******************************************************************************/
