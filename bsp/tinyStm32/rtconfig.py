@@ -1,9 +1,11 @@
+import os
+
 # toolchains options
 ARCH='arm'
 CPU='cortex-m3'
 CROSS_TOOL='gcc'
 
-#device options
+# device options
 # STM32_TYPE =
 # 'STM32F10X_LD','STM32F10X_LD_VL',
 # 'STM32F10X_MD','STM32F10X_MD_VL',
@@ -14,6 +16,9 @@ STM32_USB_LIB = False
 
 # cross_tool provides the cross compiler
 # EXEC_PATH is the compiler execute path, for example, CodeSourcery, Keil MDK, IAR
+
+if os.getenv('RTT_CC'):
+	CROSS_TOOL = os.getenv('RTT_CC')
 
 if CROSS_TOOL == 'docker':
 	PLATFORM 	= 'gcc'

@@ -155,6 +155,6 @@ struct bsp_spi_dma_mode
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-rt_err_t miniStm32_hw_spi_init(void);
+rt_err_t bsp_hw_spi_init(void);
 
 #endif /* __DRV_SPI_H__ */

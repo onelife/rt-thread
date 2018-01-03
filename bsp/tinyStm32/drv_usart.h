@@ -146,6 +146,6 @@ struct bsp_usart_dma_mode
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-rt_err_t miniStm32_hw_usart_init(void);
+rt_err_t bsp_hw_usart_init(void);
 
 #endif /* __DRV_USART_H__ */

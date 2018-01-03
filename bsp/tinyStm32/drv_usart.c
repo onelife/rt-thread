@@ -1465,7 +1465,7 @@ static rt_err_t bsp_usart_unit_init(struct bsp_usart_unit_init *init)
             NVIC_ClearPendingIRQ(tx_irq);
             nvic_init.NVIC_IRQChannel = tx_irq;
             nvic_init.NVIC_IRQChannelPreemptionPriority = 0;
-            nvic_init.NVIC_IRQChannelSubPriority = MINISTM32_IRQ_PRI_DMA;
+            nvic_init.NVIC_IRQChannelSubPriority = BSP_IRQ_PRI_DMA;
             nvic_init.NVIC_IRQChannelCmd = ENABLE;
             NVIC_Init(&nvic_init);
         }
@@ -1490,7 +1490,7 @@ static rt_err_t bsp_usart_unit_init(struct bsp_usart_unit_init *init)
             NVIC_ClearPendingIRQ(rx_irq);
             nvic_init.NVIC_IRQChannel = rx_irq;
             nvic_init.NVIC_IRQChannelPreemptionPriority = 0;
-            nvic_init.NVIC_IRQChannelSubPriority = MINISTM32_IRQ_PRI_COM;
+            nvic_init.NVIC_IRQChannelSubPriority = BSP_IRQ_PRI_COM;
             nvic_init.NVIC_IRQChannelCmd = ENABLE;
             NVIC_Init(&nvic_init);
         }
@@ -1543,7 +1543,7 @@ static rt_err_t bsp_usart_unit_init(struct bsp_usart_unit_init *init)
 *
 * @note
 ******************************************************************************/
-rt_err_t miniStm32_hw_usart_init(void)
+rt_err_t bsp_hw_usart_init(void)
 {
     struct bsp_usart_unit_init init;
 
@@ -1661,6 +1661,7 @@ rt_err_t miniStm32_hw_usart_init(void)
     rt_kprintf("USART%d err: H/W init failed!\n", init.number);
     return -RT_ERROR;
 }
+// INIT_BOARD_EXPORT(bsp_hw_usart_init);
 
 #endif /* (defined(BSP_USING_USART1) || defined(BSP_USING_USART2) || defined(BSP_USING_USART3)) */
 /***************************************************************************//**

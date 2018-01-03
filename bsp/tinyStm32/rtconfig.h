@@ -16,7 +16,7 @@
 /* SECTION: Debug */
 #define RT_DEBUG
 #define RT_USING_OVERFLOW_CHECK
-//#define RT_DEBUG_INIT                   (1)
+#define RT_DEBUG_INIT                   (1)
 //#define RT_DEBUG_MEM              (1)
 //#define RT_DEBUG_SCHEDULER            (1)
 //#define RT_DEBUG_IPC              (1)
@@ -36,8 +36,8 @@
 //#define BOARD_LED_DEBUG
 //#define BSP_USART_DEBUG
 //#define BSP_SPI_DEBUG
-#define MINISTM32_RTC_DEBUG
-//#define MINISTM32_SDCARD_DEBUG
+#define BSP_RTC_DEBUG
+//#define BSP_SDCARD_DEBUG
 //#define MINISTM32_OLED_DEBUG
 //#define EFM32_ETHERNET_DEBUG
 //#define EFM32_KEYS_DEBUG
@@ -45,7 +45,7 @@
 
 /* SECTION: System */
 /* RT_NAME_MAX*/
-#define RT_NAME_MAX                     (8)
+#define RT_NAME_MAX                     (16)
 /* RT_ALIGN_SIZE*/
 #define RT_ALIGN_SIZE                   (4)
 /* PRIORITY_MAX */
@@ -78,7 +78,7 @@
 /* Using Hook */
 //#define RT_USING_HOOK
 /* Using RT-Thread components initialization */
-//#define RT_USING_COMPONENTS_INIT
+#define RT_USING_COMPONENTS_INIT
 
 
 /* SECTION: Memory Management */
@@ -129,7 +129,7 @@
 #define BSP_USING_RTC
 #define BSP_USING_USART1
 #define BSP_USING_SPI2
-#define BSP_USING_OLED                  /* OLED (SSD1306) */
+//#define BSP_USING_OLED                  /* OLED (SSD1306) */
 #define BSP_USING_SPISD                 /* MicroSD card */
 
 /* USART setting */
@@ -189,7 +189,10 @@
 #   define SPISD_DEVICE_NAME            "spiSd"
 
 #   define RT_USING_DFS_ELMFAT
-#   define DFS_ELMFAT_INTERFACE_EFM
+// #   define RT_DFS_ELM_USE_EXFAT
+// #   define RT_DFS_ELM_CODE_PAGE         (437)
+// #   define RT_DFS_ELM_USE_LFN           (1)
+// #   define RT_DFS_ELM_MAX_LFN           (32)
 #endif
 
 
@@ -215,7 +218,7 @@
 #if defined(RT_USING_GUIENGINE)
 #   define RT_USING_DEVICE_IPC
     /* name length of RTGUI object */
-#   define RTGUI_NAME_MAX               (8)
+#   define RTGUI_NAME_MAX               (16)
     /* support 16 weight font */
 // #   define RTGUI_USING_FONT16
     /* support 12 weight font */

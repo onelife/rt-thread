@@ -26,19 +26,19 @@
 /* Exported variables --------------------------------------------------------*/
 
 /* Exported macro ------------------------------------------------------------*/
-#define MINISTM32_NO_DATA		        (0)
-#define MINISTM32_NO_POINTER		    (RT_NULL)
-#define MINISTM32_NO_OFFSET				(-1)
-#define MINISTM32_NO_DMA				(-1)
+#define BSP_NO_DATA		                (0)
+#define BSP_NO_POINTER		            (RT_NULL)
+#define BSP_NO_OFFSET				    (-1)
+#define BSP_NO_DMA				        (-1)
 
 /* SECTION: SYSTEM */
-#define MINISTM32_SRAM_SIZE 			(20 * 1024)
-#define MINISTM32_SRAM_END 				(SRAM_BASE + MINISTM32_SRAM_SIZE)
+#define BSP_SRAM_SIZE 			        (20 * 1024)
+#define BSP_SRAM_END 				    (SRAM_BASE + BSP_SRAM_SIZE)
 
-#define MINISTM32_BASE_PRI_DEFAULT 		(0x00UL)
-#define MINISTM32_IRQ_PRI_DEFAULT 		(0x08UL)
-#define MINISTM32_IRQ_PRI_COM 		    (0x07UL)
-#define MINISTM32_IRQ_PRI_DMA 		    (0x06UL)
+#define BSP_BASE_PRI_DEFAULT 		    (0x00UL)
+#define BSP_IRQ_PRI_DEFAULT 		    (0x08UL)
+#define BSP_IRQ_PRI_COM 		        (0x07UL)
+#define BSP_IRQ_PRI_DMA 		        (0x06UL)
 
 #define TASK_PRIORITY_DRIVER            (5)
 #define TASK_PRIORITY_APPLICATION       (10)
@@ -62,30 +62,6 @@
 #define SD_CS_PORT                      (GPIOB)
 #define SD_CS_PIN                       (GPIO_Pin_0)
 #endif
-
-
-/*! fixme: The following defines should be consistent with those in diskio.h */
-#define CTRL_SYNC						0
-#define GET_SECTOR_COUNT				1
-#define GET_SECTOR_SIZE					2
-#define GET_BLOCK_SIZE					3
-#define MMC_GET_TYPE					10
-#define MMC_GET_CSD						11
-#define MMC_GET_CID						12
-#define MMC_GET_OCR						13
-#define MMC_GET_SDSTAT					14
-/*! fixme: The above defines should be consistent with those in diskio.h */
-
-/* I/O control options */
-#define RT_DEVICE_CTRL_SD_SYNC 			CTRL_SYNC
-#define RT_DEVICE_CTRL_SD_GET_SCOUNT 	GET_SECTOR_COUNT
-#define RT_DEVICE_CTRL_SD_GET_SSIZE		GET_SECTOR_SIZE
-#define RT_DEVICE_CTRL_SD_GET_BSIZE 	GET_BLOCK_SIZE
-#define RT_DEVICE_CTRL_SD_GET_TYPE 		MMC_GET_TYPE
-#define RT_DEVICE_CTRL_SD_GET_CSD		MMC_GET_CSD
-#define RT_DEVICE_CTRL_SD_GET_CID 		MMC_GET_CID
-#define RT_DEVICE_CTRL_SD_GET_OCR 		MMC_GET_OCR
-#define RT_DEVICE_CTRL_SD_GET_SDSTAT	MMC_GET_SDSTAT
 
 /*! fixme: The following defines should be moved to Rtdef.h */
 #define RT_DEVICE_CTRL_MODE_BLOCKING        (0xF1)      /*!< Blocking mode operatrion */

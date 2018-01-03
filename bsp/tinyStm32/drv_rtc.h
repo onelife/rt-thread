@@ -22,6 +22,6 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-rt_err_t miniStm32_hw_rtc_init(void);
+rt_err_t bsp_hw_rtc_init(void);
 
 #endif /* __DRV_RTC_H__ */

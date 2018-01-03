@@ -28,7 +28,6 @@
 /* dfs Filesystem APIs */
 #include <dfs_fs.h>
 #endif
-
 #if defined(BSP_USING_SPISD)
 /* dfs filesystem:ELM filesystem init */
 #include <dfs_elm.h>
@@ -41,20 +40,19 @@
 #endif
 
 #if defined(RT_USING_GUIENGINE)
+#   if defined(RTGUI_USING_DFS_FILERW)
+#       include <dfs_posix.h>
+#       define PATH_SEPARATOR '/'
+#   endif
 //#include <rtgui/rtgui_server.h>
 //#include <rtgui/rtgui_system.h>
 //#include <rtgui/rtgui_app.h>
 //#include <rtgui/widgets/widget.h>
 //#include <rtgui/widgets/label.h>
-#include <rtgui/widgets/window.h>
+#   include <rtgui/widgets/window.h>
 //#include <rtgui/widgets/box.h>
-#include <rtgui/image.h>
+#   include <rtgui/image.h>
 //#include <rtgui/video_mjpeg.h> 	// TESTING
-
- #if defined(RTGUI_USING_DFS_FILERW)
- #include <dfs_posix.h>
- #define PATH_SEPARATOR     '/'
- #endif
 #endif
 
 /* Private defines -----------------------------------------------------------*/
@@ -63,7 +61,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-#if 0 //defined(BSP_USING_OLED)
+#if defined(RT_USING_GUIENGINE)
 static rt_bool_t pic_view_event_handler(rtgui_object_t *object, rtgui_event_t *event)
 {
 	rt_bool_t result;
@@ -167,6 +165,7 @@ static void app_oled(void *parameter)
 
     rtgui_app_destroy(app);
 }
+
 #elif defined(BSP_USING_OLED)
 static void app_oled(void *parameter)
 {
@@ -255,7 +254,7 @@ int rt_application_init()
     rt_thread_t demo_thread;
 
 #if defined(BSP_USING_SPISD)
-    if (miniStm32_hw_spiSd_init() != RT_EOK)
+    if (bsp_hw_spiSd_init() != RT_EOK)
     {
         rt_kprintf("INIT: Init SD card driver failed!");
         while(1); //Or do something?

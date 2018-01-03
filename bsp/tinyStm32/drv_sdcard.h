@@ -18,11 +18,9 @@
 #define __DRV_SDCARD_H__
 
 /* Includes ------------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-#define MINISTM32_SDCLK_LOW     (SPI_BaudRatePrescaler_64)
-#define MINISTM32_SDCLK_HIGH    (SPI_BaudRatePrescaler_2)
+/* Exported defines ----------------------------------------------------------*/
+#define BSP_SDCLK_LOW           (SPI_BaudRatePrescaler_64)
+#define BSP_SDCLK_HIGH          (SPI_BaudRatePrescaler_2)
 
 #define SD_INIT_RETRY_TIMES     (5)
 
@@ -30,7 +28,7 @@
 #define SD_SPEED_HIGH 			(1)
 #define SD_WAIT_PERIOD 			(RT_TICK_PER_SECOND)
 
-#define SD_SECTOR_SIZE_SHIFT	(9)
+#define SD_SECTOR_SIZE_SHIFT	(9)         /* 512 bytes is always supported */
 #define SD_SECTOR_SIZE 			(1 << SD_SECTOR_SIZE_SHIFT)
 #define SD_BLOCK_SIZE_CSD 		(16)
 #define SD_BLOCK_SIZE_CID 		(16)
@@ -64,7 +62,21 @@
 #define CMD55 					(55) 		/* APP_CMD */
 #define CMD58 					(58) 		/* READ_OCR */
 
+/* Exported types ------------------------------------------------------------*/
+struct sd_register_cid
+{
+    rt_uint8_t                  man_id;
+    rt_uint8_t                  app_id[2];
+    rt_uint8_t                  name[5];
+    rt_uint8_t                  rev;
+    rt_uint8_t                  sn[4];
+    rt_uint8_t                  date[2];
+    rt_uint8_t                  crc;
+};
+
+/* Exported constants --------------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-rt_err_t miniStm32_hw_spiSd_init(void);
+rt_err_t bsp_hw_spiSd_init(void);
 
 #endif /* __DRV_SDCARD_H__ */

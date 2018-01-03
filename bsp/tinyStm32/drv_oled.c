@@ -179,7 +179,7 @@ static const struct rtgui_graphic_driver_ops    oled_ops    =
         *(rt_uint8_t **)(&buf_ins[1]) = data;                   /* Pointer to TX buffer */
 
         MINISTM32_OLED_CS_RESET;
-        if (rt_device_write(spi_dev, MINISTM32_NO_DATA, buf_ins, size) == 0)
+        if (rt_device_write(spi_dev, BSP_NO_DATA, buf_ins, size) == 0)
         {
             oled_debug("OLED: Write data failed! (%d, %x, %x, %x)\n",
                     size, *data, *(data+1), *(data+2), *(data+3));
@@ -896,7 +896,7 @@ static rt_err_t miniStm32_oled_control(rt_device_t dev, int cmd, void *args)
  * @note
  *
  ******************************************************************************/
-void miniStm32_hw_oled_init(void)
+void bsp_hw_oled_init(void)
 {
     do
     {
@@ -947,6 +947,7 @@ void miniStm32_hw_oled_init(void)
 
     oled_debug("OLED err: H/W init failed!\n");
 }
+INIT_BOARD_EXPORT(bsp_hw_oled_init);
 
 #endif /* defined(BSP_USING_OLED) */
 /***************************************************************************//**

@@ -28,7 +28,7 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
-#ifdef MINISTM32_RTC_DEBUG
+#ifdef BSP_RTC_DEBUG
 #define rtc_debug(format,args...)           rt_kprintf(format, ##args)
 #else
 #define rtc_debug(format,args...)
@@ -174,7 +174,7 @@ static rt_err_t miniStm32_rtc_control(rt_device_t dev, rt_uint8_t cmd,
 * @return
 *   Error code
 ******************************************************************************/
-rt_err_t miniStm32_hw_rtc_init(void)
+rt_err_t bsp_hw_rtc_init(void)
 {
     miniStm32_irq_hook_init_t hook;
     NVIC_InitTypeDef nvic_init;
@@ -256,7 +256,7 @@ rt_err_t miniStm32_hw_rtc_init(void)
     NVIC_ClearPendingIRQ(RTC_IRQn);
     nvic_init.NVIC_IRQChannel = RTC_IRQn;
     nvic_init.NVIC_IRQChannelPreemptionPriority = 0;
-    nvic_init.NVIC_IRQChannelSubPriority = MINISTM32_IRQ_PRI_DEFAULT;
+    nvic_init.NVIC_IRQChannelSubPriority = BSP_IRQ_PRI_DEFAULT;
     nvic_init.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&nvic_init);
 
@@ -272,6 +272,8 @@ rt_err_t miniStm32_hw_rtc_init(void)
 
     return rt_device_register(&rtc, RTC_NAME, RT_DEVICE_FLAG_RDWR);
 }
+INIT_BOARD_EXPORT(bsp_hw_rtc_init);
+
 
 /*******************************************************************************
  *  Support function

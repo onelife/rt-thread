@@ -278,6 +278,7 @@ rt_err_t board_hw_led_init(void)
 	rt_kprintf("LED%d err: H/W init failed!\n", init.number);
 	return -RT_ERROR;
 }
+INIT_BOARD_EXPORT(board_hw_led_init);
 
 
 /*******************************************************************************

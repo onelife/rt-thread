@@ -56,6 +56,6 @@
     #error "Undefined OLED interface!"
 #endif
 /* Exported functions ------------------------------------------------------- */
-void miniStm32_hw_oled_init(void);
+void bsp_hw_oled_init(void);
 
 #endif /* __DEV_OLED_H__ */

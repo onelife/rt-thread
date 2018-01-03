@@ -31,7 +31,7 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
-#ifdef MINISTM32_SDCARD_DEBUG
+#ifdef BSP_SDCARD_DEBUG
 #define sdcard_debug(format,args...)        rt_kprintf(format, ##args)
 #else
 #define sdcard_debug(format,args...)
@@ -76,7 +76,7 @@ static void bsp_spiSd_timer(void* parameter)
  *  Chip select pin setting
  ******************************************************************************/
 #if (defined(SD_CS_PORT) && defined(SD_CS_PIN))
-    #define bsp_spiSd_cs(enable)  if (enable) SD_CS_PORT->BRR = SD_CS_PIN; else SD_CS_PORT->BSRR = SD_CS_PIN;
+#   define bsp_spiSd_cs(enable)  if (enable) SD_CS_PORT->BRR = SD_CS_PIN; else SD_CS_PORT->BSRR = SD_CS_PIN;
 #endif
 
 
@@ -96,7 +96,7 @@ static void bsp_spiSd_speed(rt_uint8_t level)
     RT_ASSERT(spi_dev != RT_NULL);
 
     struct bsp_spi_device *spi;
-    rt_uint16_t prescaler = (level == SD_SPEED_HIGH)? MINISTM32_SDCLK_HIGH : MINISTM32_SDCLK_LOW;
+    rt_uint16_t prescaler = (level == SD_SPEED_HIGH)? BSP_SDCLK_HIGH : BSP_SDCLK_LOW;
 
     spi = (struct bsp_spi_device *)(spi_dev->user_data);
     spi->spi_device->CR1 &= ~0x0038;
@@ -129,7 +129,7 @@ static rt_size_t bsp_spiSd_read(void *buffer, rt_size_t size)
     *(rt_uint8_t **)(&buf_read[1]) = buffer;
     /* Read data */
     bsp_spiSd_cs(1);
-    if ((ret = rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_read, size)) == 0)
+    if ((ret = rt_device_read(spi_dev, BSP_NO_DATA, buf_read, size)) == 0)
     {
         rt_uint8_t *temp = (rt_uint8_t *)buffer;
         sdcard_debug("SPISD: Read failed! (%d, %x %x %x %x %x)\n", ret,
@@ -166,7 +166,7 @@ static rt_uint16_t bsp_spiSd_cmd(
     rt_uint8_t *trail)
 {
     rt_uint8_t buf_ins[11];
-    rt_uint8_t buf_res[32];     /* Expect (x+1+4) bytes for CRC, (x+1+19) for CSD/CID */
+    rt_uint8_t buf_res[32];     /* Expect (x+1+4) bytes for CRC, (x+1+16) bytes for CSD/CID */
     rt_uint8_t len_trl, i, j;
     rt_uint16_t ret;
     rt_bool_t skip;
@@ -184,50 +184,27 @@ static rt_uint16_t bsp_spiSd_cmd(
         buf_ins[3] = (arg >> 16) & 0x000000ff;
         buf_ins[4] = (arg >> 8) & 0x000000ff;
         buf_ins[5] = arg & 0x000000ff;
-        if (cmd == CMD0)
-        {
-            buf_ins[6] = 0x95;                      /* Valid CRC for CMD0(0) */
-        }
-        else if (cmd == CMD8)
-        {
-            buf_ins[6] = 0x87;                      /* Valid CRC for CMD8(0x1AA) */
-        }
-        else if (cmd == CMD58)
-        {
-            buf_ins[6] = 0x01;                      /* Dummy CRC + Stop */
-        }
-        else
-        {
-            buf_ins[6] = 0x01;                      /* Dummy CRC + Stop */
+        switch (cmd) {
+        case CMD0:  buf_ins[6] = 0x95; break;       /* Valid CRC for CMD0(0) */
+        case CMD8:  buf_ins[6] = 0x87; break;       /* Valid CRC for CMD8(0x1AA) */
+        case CMD58: buf_ins[6] = 0x01; break;       /* Dummy CRC + Stop */
+        default:    buf_ins[6] = 0x01;              /* Dummy CRC + Stop */
         }
         *(rt_uint8_t **)(&buf_ins[7]) = buf_res;    /* Pointer to RX buffer */
 
         /* Set trail length */
-        if (cmd == CMD8)
-        {
-            len_trl = 4;                            /* R7 response */
-        }
-        else if (cmd == CMD9)
-        {
-            len_trl = SD_BLOCK_SIZE_CSD;
-        }
-        else if (cmd == CMD10)
-        {
-            len_trl = SD_BLOCK_SIZE_CID;
-        }
-        else if (cmd == CMD58)
-        {
-            len_trl = SD_BLOCK_SIZE_OCR;            /* R3 response */
-        }
-        else
-        {
-            len_trl = 0;
+        switch (cmd) {
+        case CMD8:  len_trl = 4; break;             /* R7 response */
+        case CMD9:  len_trl = SD_BLOCK_SIZE_CSD; break; 
+        case CMD10: len_trl = SD_BLOCK_SIZE_CID; break;
+        case CMD58: len_trl = SD_BLOCK_SIZE_OCR; break; /* R3 response */
+        default:    len_trl = 0;
         }
 
         /* Send command and get response */
         bsp_spiSd_cs(1);
         rt_err_t rst;
-        if ((rst=rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_ins, sizeof(buf_res))) == 0)
+        if ((rst=rt_device_read(spi_dev, BSP_NO_DATA, buf_ins, sizeof(buf_res))) == 0)
         {
             sdcard_debug("SPISD: Send command failed! (%d, %x %x %x %x %x)\n", rst,
                 buf_res[0], buf_res[1], buf_res[2], buf_res[3], buf_res[4]);
@@ -236,14 +213,8 @@ static rt_uint16_t bsp_spiSd_cmd(
         bsp_spiSd_cs(0);
 
         /* Skip a stuff byte when stop reading */
-        if (cmd == CMD12)
-        {
-            skip = RT_TRUE;
-        }
-        else
-        {
-            skip = RT_FALSE;
-        }
+        skip = (cmd == CMD12) ? RT_TRUE : RT_FALSE;
+
         /* Find valid response: The response is sent back within command response time
             (NCR), 0 to 8 bytes for SDC, 1 to 8 bytes for MMC */
         for (i = 0; i < sizeof(buf_res); i++)
@@ -270,28 +241,31 @@ static rt_uint16_t bsp_spiSd_cmd(
         }
         sdcard_debug("SPISD: Response %x (at %d)\n", ret, i);
         i++;
+        
         /* Copy the trailing data */
         if ((ret != 0xffff) && len_trl && trail)
         {
+            /* Read CSD/CID */
             if (cmd == CMD9 || cmd == CMD10)
             {
-                /* Wait for data block */
+                /* Find data block */
                 for (; i < sizeof(buf_res); i++)
                 {
-                    if (buf_res[i] == 0xfe)
-                    {
-                        break;
-                    }
+                    if (buf_res[i] == 0xfe) break;
                 }
                 /* Check if valid */
                 if (i >= sizeof(buf_res))
                 {
-                    sdcard_debug("SPISD: Token is not found!\n");
+                    sdcard_debug("SPISD: No CSD/CID found!\n");
                     ret = 0xffff;
                     break;
                 }
                 i++;
+                sdcard_debug("SPISD: CSD/CID %x (at %d)\n", buf_res[i], i);
+                sdcard_debug("SPISD: Read CRC %x %x\n", buf_res[i+len_trl], 
+                    buf_res[i+len_trl+1]);
             }
+
             /* Copy the data */
             for (j = 0; j < len_trl; j++)
             {
@@ -339,7 +313,7 @@ static rt_err_t bsp_spiSd_readBlock(void *buffer, rt_size_t size)
         {
             /* Send read command */
             bsp_spiSd_cs(1);
-            if (rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_ins, \
+            if (rt_device_read(spi_dev, BSP_NO_DATA, buf_ins, \
                 sizeof(buf_res)) == 0)
             {
                 sdcard_debug("SPISD: Get read command response failed!\n");
@@ -364,7 +338,7 @@ static rt_err_t bsp_spiSd_readBlock(void *buffer, rt_size_t size)
         /* Ckeck if valid */
         if (!start || (buf_res[i] != 0xfe))
         {
-            sdcard_debug("SPISD: Token is invalid! (%x)\n", buf_res[i]);
+            sdcard_debug("SPISD: Invalid token %x (at %d)!\n", buf_res[i], i);
             break;
         }
         /* Copy data to buffer and read the rest */
@@ -379,13 +353,13 @@ static rt_err_t bsp_spiSd_readBlock(void *buffer, rt_size_t size)
 
         /* Send read command */
         bsp_spiSd_cs(1);
-        if (rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_ins, size - len_copy) == 0)
+        if (rt_device_read(spi_dev, BSP_NO_DATA, buf_ins, size - len_copy) == 0)
         {
             sdcard_debug("SPISD: Read data block failed!\n");
             break;
         }
         *(rt_uint8_t **)(&buf_ins[1]) = buf_res;    /* Pointer to RX buffer */
-        if (rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_ins, sizeof(buf_res)) == 0)
+        if (rt_device_read(spi_dev, BSP_NO_DATA, buf_ins, sizeof(buf_res)) == 0)
         {
             sdcard_debug("SPISD: Read CRC failed!\n");
             break;
@@ -455,7 +429,7 @@ static rt_err_t bsp_spiSd_writeBlock(void *buffer, rt_uint8_t token)
             buf_ins[1] = token;
             *(rt_uint8_t **)(&buf_ins[2]) = (rt_uint8_t *)buffer;   /* Pointer to TX buffer */
             bsp_spiSd_cs(1);
-            if (rt_device_write(spi_dev, MINISTM32_NO_DATA, buf_ins, SD_SECTOR_SIZE) == 0)
+            if (rt_device_write(spi_dev, BSP_NO_DATA, buf_ins, SD_SECTOR_SIZE) == 0)
             {
                 sdcard_debug("SPISD: Write data failed!\n");
                 break;
@@ -467,7 +441,7 @@ static rt_err_t bsp_spiSd_writeBlock(void *buffer, rt_uint8_t token)
             buf_ins[2] = 0xff;
             *(rt_uint8_t **)(&buf_ins[3]) = buf_res;    /* Pointer to RX buffer */
             /* Send CRC and read a byte */
-            if (rt_device_read(spi_dev, MINISTM32_NO_DATA, buf_ins, sizeof(buf_res)) == 0)
+            if (rt_device_read(spi_dev, BSP_NO_DATA, buf_ins, sizeof(buf_res)) == 0)
             {
                 sdcard_debug("SPISD: Write CRC failed!\n");
                 break;
@@ -497,7 +471,7 @@ static rt_err_t bsp_spiSd_writeBlock(void *buffer, rt_uint8_t token)
             buf_ins[1] = token;
             *(rt_uint8_t **)(&buf_ins[2]) = RT_NULL;    /* Pointer to TX buffer */
             bsp_spiSd_cs(1);
-            if (rt_device_write(spi_dev, MINISTM32_NO_DATA, buf_ins, 0) != 0)
+            if (rt_device_write(spi_dev, BSP_NO_DATA, buf_ins, 0) != 0)
             {
                 sdcard_debug("SPISD: Write token failed!\n");
                 break;
@@ -559,7 +533,7 @@ rt_uint16_t bsp_spiSd_sendCmd(
     if (cmd & 0x80)
     {
         cmd &= 0x7f;
-        ret = bsp_spiSd_cmd(CMD55, 0x00000000, MINISTM32_NO_POINTER);
+        ret = bsp_spiSd_cmd(CMD55, 0x00000000, BSP_NO_POINTER);
         if (ret > 0x01)
         {
             return ret;
@@ -611,7 +585,8 @@ void bsp_spiSd_deinit(void)
  ******************************************************************************/
 static rt_err_t rt_spiSd_init(rt_device_t dev)
 {
-    rt_uint8_t type, cmd, tril[4];
+    /* Ref: http://elm-chan.org/docs/mmc/mmc_e.html */
+    rt_uint8_t type, tril[4];
     rt_uint8_t *buf_res;
     rt_uint8_t retry;
 
@@ -645,7 +620,7 @@ static rt_err_t rt_spiSd_init(rt_device_t dev)
         /* >74 dummy clocks */
         rt_device_control(spi_dev, RT_DEVICE_CTRL_SPI_OUTPUT_CLOCK, (void *)10);
         /* Enter Idle state */
-        while (retry && (bsp_spiSd_sendCmd(CMD0, 0x00000000, MINISTM32_NO_POINTER) != 0x01))
+        while (retry && (bsp_spiSd_sendCmd(CMD0, 0x00000000, BSP_NO_POINTER) != 0x01))
         {
 			retry--;
         }
@@ -654,20 +629,18 @@ static rt_err_t rt_spiSd_init(rt_device_t dev)
             break;
         }
         /* Check if SDv2 */
-        if ( bsp_spiSd_sendCmd(CMD8, 0x000001AA, tril) == 0x01)
+        if (bsp_spiSd_sendCmd(CMD8, 0x000001AA, tril) == 0x01)
         {
             /* SDv2, Vdd: 2.7-3.6V */
-            if (tril[2] == 0x01 && tril[3] == 0xAA)
+            if ((tril[2] & 0x0F) == 0x01 && tril[3] == 0xAA)
             {
                 /* Initialize timer */
                 sdInTime = RT_TRUE;
                 rt_timer_start(sdTimer);
-                /* Wait for leaving idle state (ACMD41 with HCS bit) */
-                while (bsp_spiSd_sendCmd(ACMD41, 0x40000000, MINISTM32_NO_POINTER) \
-                    && sdInTime);
+                /* SD initialization (ACMD41 with HCS bit) */
+                while (sdInTime && bsp_spiSd_sendCmd(ACMD41, 0x40000000, BSP_NO_POINTER));
                 /* Check CCS bit (bit 30) in the OCR */
-                if (sdInTime && bsp_spiSd_sendCmd(CMD58, 0x00000000, tril) \
-                    == 0x00)
+                if (sdInTime && (bsp_spiSd_sendCmd(CMD58, 0x00000000, tril) == 0x00))
                 {
                     type = (tril[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;
                 }
@@ -675,34 +648,40 @@ static rt_err_t rt_spiSd_init(rt_device_t dev)
         }
         else
         {
-            if (bsp_spiSd_sendCmd(ACMD41, 0x00000000, MINISTM32_NO_POINTER) <= 0x01)
-            {
-                /* SDv1 */
-                type = CT_SD1;
-                cmd = ACMD41;
-            }
-            else
-            {
-                /* MMCv3 */
-                type = CT_MMC;
-                cmd = CMD1;
-            }
             /* Initialize timer */
             sdInTime = RT_TRUE;
             rt_timer_start(sdTimer);
-            /* Wait for leaving idle state */
-            while (bsp_spiSd_sendCmd(cmd, 0x00000000, MINISTM32_NO_POINTER) && \
-                sdInTime);
-            /* Set read/write block length to SD_BLOCK_SIZE */
-            if (!sdInTime || \
-                (bsp_spiSd_sendCmd(CMD16, SD_SECTOR_SIZE, MINISTM32_NO_POINTER) \
-                != 0x00))
+            /* SD initialization */
+            while (sdInTime && bsp_spiSd_sendCmd(ACMD41, 0x00000000, BSP_NO_POINTER));
+            if (sdInTime)
             {
-                type = 0;
-                break;
+                /* SDv1 */
+                type = CT_SD1;
+            }
+            else
+            {
+                /* Initialize timer */
+                sdInTime = RT_TRUE;
+                rt_timer_start(sdTimer);
+                /* MMC initialization */
+                while (sdInTime && bsp_spiSd_sendCmd(CMD1, 0x00000000, BSP_NO_POINTER));
+                if (sdInTime)
+                {
+                    /* MMCv3 */
+                    type = CT_MMC;
+                }
             }
         }
         rt_timer_stop(sdTimer);
+
+        /* Set read/write block length to 512 bytes */
+        if ((type > 0) && !(type | CT_BLOCK))
+        {
+            if (bsp_spiSd_sendCmd(CMD16, 0x00000200, BSP_NO_POINTER) != 0x00)
+            {
+                type = 0;
+            }
+        }
 
         /* Check type */
         sdType = type;
@@ -853,7 +832,7 @@ static rt_size_t rt_spiSd_read(
             sdcard_debug("SPISD: Read multiple blocks\n");
         }
 
-        if (bsp_spiSd_sendCmd(cmd, sector, MINISTM32_NO_POINTER))
+        if (bsp_spiSd_sendCmd(cmd, sector, BSP_NO_POINTER))
         {
             sdcard_debug("SPISD: Read command error!\n");
             break;
@@ -872,7 +851,7 @@ static rt_size_t rt_spiSd_read(
         /* Stop transmission */
         if (cmd == CMD18)
         {
-            if (bsp_spiSd_sendCmd(CMD12, 0x00000000, MINISTM32_NO_POINTER))
+            if (bsp_spiSd_sendCmd(CMD12, 0x00000000, BSP_NO_POINTER))
             {
                 break;
             }
@@ -945,14 +924,14 @@ static rt_size_t rt_spiSd_write (
             sdcard_debug("SPISD: Write multiple blocks\n");
             if (sdType & CT_SDC)
             {
-                if (bsp_spiSd_sendCmd(ACMD23, count, MINISTM32_NO_POINTER))
+                if (bsp_spiSd_sendCmd(ACMD23, count, BSP_NO_POINTER))
                 {
                     break;
                 }
             }
         }
 
-        if (bsp_spiSd_sendCmd(cmd, sector, MINISTM32_NO_POINTER))
+        if (bsp_spiSd_sendCmd(cmd, sector, BSP_NO_POINTER))
         {
             sdcard_debug("SPISD: Write command error!\n");
             break;
@@ -969,7 +948,7 @@ static rt_size_t rt_spiSd_write (
         } while(--cnt);
 
         /* Stop transmission token */
-        if (bsp_spiSd_writeBlock(MINISTM32_NO_POINTER, 0xfd))
+        if (bsp_spiSd_writeBlock(BSP_NO_POINTER, 0xfd))
         {
             break;
         }
@@ -1014,15 +993,17 @@ static rt_err_t rt_spiSd_control (
     buf_res = RT_NULL;
     switch (ctrl)
     {
-    case RT_DEVICE_CTRL_SD_SYNC:
+    case RT_DEVICE_CTRL_BLK_SYNC:
         /* Flush dirty buffer if present */
         bsp_spiSd_cs(1);
         bsp_spiSd_cs(0);
         ret = RT_EOK;
         break;
 
-    case RT_DEVICE_CTRL_SD_GET_SCOUNT:
+    case RT_DEVICE_CTRL_BLK_GETGEOME:
         {
+            struct rt_device_blk_geometry *geometry = buffer;
+            
             /* Allocate buffer */
             if ((buf_res = rt_malloc(SD_BLOCK_SIZE_CSD)) == RT_NULL)
             {
@@ -1043,7 +1024,7 @@ static rt_err_t rt_spiSd_control (
                 c_size = ((rt_uint32_t)(buf_res[7] & 0x3f) << 16) + \
                     ((rt_uint32_t)buf_res[8] << 8) + buf_res[9] + 1;
                 /* Result = Capacity / Sector Size */
-                *(rt_uint32_t *)buffer = (rt_uint32_t)c_size << \
+                geometry->sector_count = (rt_uint32_t)c_size << \
                     (19 - SD_SECTOR_SIZE_SHIFT);
             }
             else
@@ -1056,127 +1037,75 @@ static rt_err_t rt_spiSd_control (
                 n = ((buf_res[9] & 0x03) << 1) + ((buf_res[10] & 0x80) >> 7) + \
                     2 + (buf_res[5] & 0x0f);
                 /* Result = Capacity / Sector Size */
-                *(rt_uint32_t *)buffer = (rt_uint32_t)c_size << \
+                geometry->sector_count = (rt_uint32_t)c_size << \
                     (n - SD_SECTOR_SIZE_SHIFT);
+            }
+
+            /* Get sector size */
+            geometry->bytes_per_sector = SD_SECTOR_SIZE;
+            
+            /* Get erase block size in unit of sectors (32 bits) */
+            if (sdType & CT_SD2)
+            {
+                /* Allocate buffer */
+                if ((buf_res = rt_malloc(SD_BLOCK_SIZE_SDSTAT)) == RT_NULL)
+                {
+                    sdcard_debug("SPISD: No memory for RX buffer\n");
+                    break;
+                }
+                /* SDv2 */
+                if (bsp_spiSd_sendCmd(ACMD13, 0x00000000, BSP_NO_POINTER))
+                {
+                    sdcard_debug("SPISD: Get SD status failed!\n");
+                    break;
+                }
+                if (bsp_spiSd_readBlock(buf_res, SD_BLOCK_SIZE_SDSTAT))
+                {
+                    sdcard_debug("SPISD: Read SD status failed!\n");
+                    break;
+                }
+                /* AU_SIZE: Bit 428~431 */
+                geometry->block_size = 16UL << ((buf_res[10] >> 4) + 9 - \
+                    SD_SECTOR_SIZE_SHIFT);
+            }
+            else
+            {
+                /* Allocate buffer */
+                if ((buf_res = rt_malloc(SD_BLOCK_SIZE_CSD)) == RT_NULL)
+                {
+                    sdcard_debug("SPISD: No memory for RX buffer\n");
+                    break;
+                }
+                /* SDv1 or MMC */
+                if (bsp_spiSd_sendCmd(CMD9, 0x00000000, buf_res))
+                {
+                    sdcard_debug("SPISD: Get CSD failed!\n");
+                    break;
+                }
+
+                if (sdType & CT_SD1)
+                {
+                    /* SECTOR_SIZE: Bit 39~45, WRITE_BL_LEN: Bit 22~25 (9, 10 or 11) */
+                    geometry->block_size = (((buf_res[10] & 0x3f) << 1) + \
+                        ((rt_uint32_t)(buf_res[11] & 0x80) >> 7) + 1) << \
+                        (8 + (buf_res[13] >> 6) - SD_SECTOR_SIZE_SHIFT);
+                }
+                else
+                {
+                    /* ERASE_GRP_SIZE: Bit 42~46, ERASE_GRP_MULT: Bit 37~41 */
+                    geometry->block_size = \
+                        ((rt_uint16_t)((buf_res[10] & 0x7c) >> 2) + 1) * \
+                        (((buf_res[10] & 0x03) << 3) + \
+                        ((buf_res[11] & 0xe0) >> 5) + 1);
+                }
             }
             ret = RT_EOK;
             break;
         }
 
-    case RT_DEVICE_CTRL_SD_GET_SSIZE:
-        /* Get sectors on the disk (16 bits) */
-        *(rt_uint16_t *)buffer = SD_SECTOR_SIZE;
-        ret = RT_EOK;
-        break;
-
-    case RT_DEVICE_CTRL_SD_GET_BSIZE:
-        /* Get erase block size in unit of sectors (32 bits) */
-        if (sdType & CT_SD2)
-        {
-            /* Allocate buffer */
-            if ((buf_res = rt_malloc(SD_BLOCK_SIZE_SDSTAT)) == RT_NULL)
-            {
-                sdcard_debug("SPISD: No memory for RX buffer\n");
-                break;
-            }
-            /* SDv2 */
-            if (bsp_spiSd_sendCmd(ACMD13, 0x00000000, MINISTM32_NO_POINTER))
-            {
-                sdcard_debug("SPISD: Get SD status failed!\n");
-                break;
-            }
-            if (bsp_spiSd_readBlock(buf_res, SD_BLOCK_SIZE_SDSTAT))
-            {
-                sdcard_debug("SPISD: Read SD status failed!\n");
-                break;
-            }
-            /* AU_SIZE: Bit 428~431 */
-            *(rt_uint32_t *)buffer = 16UL << ((buf_res[10] >> 4) + 9 - \
-                SD_SECTOR_SIZE_SHIFT);
-        }
-        else
-        {
-            /* Allocate buffer */
-            if ((buf_res = rt_malloc(SD_BLOCK_SIZE_CSD)) == RT_NULL)
-            {
-                sdcard_debug("SPISD: No memory for RX buffer\n");
-                break;
-            }
-            /* SDv1 or MMC */
-            if (bsp_spiSd_sendCmd(CMD9, 0x00000000, buf_res))
-            {
-                sdcard_debug("SPISD: Get CSD failed!\n");
-                break;
-            }
-
-            if (sdType & CT_SD1)
-            {
-                /* SECTOR_SIZE: Bit 39~45, WRITE_BL_LEN: Bit 22~25 (9, 10 or 11) */
-                *(rt_uint32_t *)buffer = (((buf_res[10] & 0x3f) << 1) + \
-                    ((rt_uint32_t)(buf_res[11] & 0x80) >> 7) + 1) << \
-                    (8 + (buf_res[13] >> 6) - SD_SECTOR_SIZE_SHIFT);
-            }
-            else
-            {
-                /* ERASE_GRP_SIZE: Bit 42~46, ERASE_GRP_MULT: Bit 37~41 */
-                *(rt_uint32_t *)buffer = \
-                    ((rt_uint16_t)((buf_res[10] & 0x7c) >> 2) + 1) * \
-                    (((buf_res[10] & 0x03) << 3) + \
-                    ((buf_res[11] & 0xe0) >> 5) + 1);
-            }
-        }
-        ret = RT_EOK;
-        break;
-
-    case RT_DEVICE_CTRL_SD_GET_TYPE:
-        /* Get card type flags (1 byte) */
-        *(rt_uint8_t *)buffer = sdType;
-        ret = RT_EOK;
-        break;
-
-    case RT_DEVICE_CTRL_SD_GET_CSD:
-        /* Receive CSD as a data block (16 bytes) */
-        if (bsp_spiSd_sendCmd(CMD9, 0x00000000, buffer))
-        {
-            sdcard_debug("SPISD: Get CSD failed!\n");
-            break;
-        }
-        ret = RT_EOK;
-        break;
-
-    case RT_DEVICE_CTRL_SD_GET_CID:
-        /* Receive CID as a data block (16 bytes) */
-        if (bsp_spiSd_sendCmd(CMD10, 0x00000000, buffer))
-        {
-            sdcard_debug("SPISD: Get CID failed!\n");
-            break;
-        }
-        ret = RT_EOK;
-        break;
-
-    case RT_DEVICE_CTRL_SD_GET_OCR:
-        /* Receive OCR as an R3 resp (4 bytes) */
-        if (bsp_spiSd_sendCmd(CMD58, 0x00000000, buffer))
-        {
-            sdcard_debug("SPISD: Get OCR failed!\n");
-            break;
-        }
-        ret = RT_EOK;
-        break;
-
-    case RT_DEVICE_CTRL_SD_GET_SDSTAT:
-        /* Receive SD statsu as a data block (64 bytes) */
-        if (bsp_spiSd_sendCmd(ACMD13, 0x00000000, buffer))
-        {
-            sdcard_debug("SPISD: Get SD status failed!\n");
-            break;
-        }
-        if (bsp_spiSd_readBlock(buffer, SD_BLOCK_SIZE_SDSTAT))
-        {
-            sdcard_debug("SPISD: Read SD status failed!\n");
-            break;
-        }
-        ret = RT_EOK;
+    case RT_DEVICE_CTRL_BLK_ERASE:
+        // TODO 
+        ret = RT_ERROR;
         break;
 
     default:
@@ -1202,7 +1131,7 @@ static rt_err_t rt_spiSd_control (
 * @return
 *   Error code
 ******************************************************************************/
-rt_err_t miniStm32_hw_spiSd_init(void)
+rt_err_t bsp_hw_spiSd_init(void)
 {
     do
     {
@@ -1262,51 +1191,61 @@ rt_err_t miniStm32_hw_spiSd_init(void)
 
 void list_sd(void)
 {
-    rt_uint8_t buf_res[16];
-    rt_uint32_t capacity, temp32;
-    rt_uint16_t temp16;
+    rt_uint8_t i, buf_res[16];
+    rt_uint32_t temp;
+    struct sd_register_cid *cid = buf_res;
+    struct rt_device_blk_geometry geometry;
+
+    /* Receive CID as a data block (16 bytes) */
+    if (bsp_spiSd_sendCmd(CMD10, 0x00000000, buf_res))
+    {
+        rt_kprintf("SPISD: Get CID failed!\n");
+        return;
+    }
 
     rt_kprintf("    SD Card on %s\n", SPISD_USING_DEVICE_NAME);
     rt_kprintf(" ------------------------------\n");
-    sd_dev.control(&sd_dev, RT_DEVICE_CTRL_SD_GET_CID, buf_res);
-    rt_kprintf(" Manufacturer ID:\t%x\n", buf_res[0]);
-    rt_kprintf(" OEM/Application ID:\t%x%x\n", buf_res[1], buf_res[2]);
-    rt_kprintf(" Product revision:\t%x\n", buf_res[8]);
-    buf_res[8] = 0;
-    rt_kprintf(" Product name:\t\t%s\n", &buf_res[3]);
-    rt_kprintf(" Serial number:\t\t%x%x%x%x\n", \
-        buf_res[9], buf_res[10], buf_res[11], buf_res[12]);
+    rt_kprintf(" Manufacturer ID:\t%X\n", cid->man_id);
+    rt_kprintf(" OEM/Application ID:\t%c%c\n", cid->app_id[0], cid->app_id[1]);
+    buf_res[13] = 0;
+    rt_kprintf(" Product name:\t\t%c%c%c%c%c\n", cid->name[0], cid->name[1], 
+        cid->name[2], cid->name[3], cid->name[4]);
+    rt_kprintf(" Product revision:\t%X.%X\n", (cid->rev & 0xF0) >> 4, 
+        (cid->rev & 0x0F));
+    temp = ((rt_uint32_t)cid->sn[0] << 24) + ((rt_uint32_t)cid->sn[1] << 16) + \
+        ((rt_uint32_t)cid->sn[2] << 8) + (rt_uint32_t)cid->sn[3];
+    rt_kprintf(" Serial number:\t\t%X\n", temp);
     rt_kprintf(" Manufacturing date:\t%d.%d\n", \
-        2000 + ((buf_res[13] & 0x0F) << 4) + ((buf_res[14] & 0xF0) >> 4), \
-        buf_res[14] & 0x0F);
+        2000 + ((cid->date[0] & 0x0F) * 10) + ((cid->date[1] & 0xF0) >> 4), \
+        cid->date[1] & 0x0F);
+    
     rt_kprintf(" Card type:\t\t");
-    sd_dev.control(&sd_dev, RT_DEVICE_CTRL_SD_GET_TYPE, buf_res);
-    if (buf_res[0] == CT_MMC)
+    if (sdType & CT_MMC)
     {
         rt_kprintf("%s\n", "MMC");
     }
-    else if (buf_res[0] == CT_SDC)
+    else if (sdType & CT_SDC)
     {
         rt_kprintf("%s\n", "SDXC");
     }
-    else if (buf_res[0] == CT_SD1)
+    else if (sdType & CT_SD1)
     {
         rt_kprintf("%s\n", "SDSC");
     }
-    else if (buf_res[0] == CT_SD2)
+    else if (sdType & CT_SD2)
     {
         rt_kprintf("%s\n", "SDHC");
     }
 	else
 	{
-		rt_kprintf("0x%x\n", buf_res[0]);
+		rt_kprintf("0x%X\n", sdType);
 	}
-    sd_dev.control(&sd_dev, RT_DEVICE_CTRL_SD_GET_SSIZE, &temp16);
-    sd_dev.control(&sd_dev, RT_DEVICE_CTRL_SD_GET_SCOUNT, &temp32);
-    capacity = ((temp32 & 0x0000FFFF) * temp16) >> 16;
-    capacity += ((temp32 >> 16) * temp16);
-    capacity >>= 4;
-    rt_kprintf(" Card capacity:\t\t%dMB\n", capacity);
+    
+    sd_dev.control(&sd_dev, RT_DEVICE_CTRL_BLK_GETGEOME, &geometry);
+    temp = ((geometry.sector_count & 0x0000FFFF) * geometry.bytes_per_sector) >> 16;
+    temp += ((geometry.sector_count >> 16) * geometry.bytes_per_sector);
+    temp >>= 4;
+    rt_kprintf(" Card capacity:\t\t%dMB\n", temp);
 }
 FINSH_FUNCTION_EXPORT(list_sd, list the SD card.)
 #endif
