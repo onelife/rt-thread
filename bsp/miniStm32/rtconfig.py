@@ -1,9 +1,9 @@
 import os
 
 # toolchains options
-ARCH='arm'
-CPU='cortex-m3'
-CROSS_TOOL='gcc'
+ARCH = 'arm'
+CPU = 'cortex-m3'
+CROSS_TOOL = 'gcc'
 
 # device options
 # STM32_TYPE =
@@ -17,17 +17,18 @@ STM32_TYPE = 'STM32F10X_XL'
 # EXEC_PATH is the compiler execute path, for example, CodeSourcery, Keil MDK, IAR
 
 if os.getenv('RTT_CC'):
-	CROSS_TOOL = os.getenv('RTT_CC')
-
-if  CROSS_TOOL == 'gcc':
-	PLATFORM 	= 'gcc'
-	EXEC_PATH   = 'C:/Tools/Sourcery_CodeBench_Lite_for_ARM_EABI/bin'
+    CROSS_TOOL = os.getenv('RTT_CC')
+    PLATFORM = CROSS_TOOL
+    EXEC_PATH = os.getenv('RTT_EXEC_PATH')
+elif CROSS_TOOL == 'gcc':
+    PLATFORM = 'gcc'
+    EXEC_PATH = 'C:/Tools/Sourcery_CodeBench_Lite_for_ARM_EABI/bin'
 elif CROSS_TOOL == 'keil':
-	PLATFORM 	= 'armcc'
-	EXEC_PATH 	= 'E:/Keil'
+    PLATFORM = 'armcc'
+    EXEC_PATH = 'E:/Keil'
 elif CROSS_TOOL == 'iar':
-	PLATFORM 	= 'iar'
-	IAR_PATH 	= 'E:/Program Files/IAR Systems/Embedded Workbench 6.0'
+    PLATFORM = 'iar'
+    IAR_PATH = 'E:/Program Files/IAR Systems/Embedded Workbench 6.0'
 
 BUILD = 'debug'
 # BUILD = 'release'
