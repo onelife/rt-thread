@@ -166,7 +166,7 @@ static rt_uint16_t bsp_spiSd_cmd(
     rt_uint8_t *trail)
 {
     rt_uint8_t buf_ins[11];
-    rt_uint8_t buf_res[32];     /* Expect (x+1+4) bytes for CRC, (x+1+16) bytes for CSD/CID */
+    rt_uint8_t buf_res[32];     /* Expect (x+1+4) bytes for CRC, (x+1+19) bytes for CSD/CID */
     rt_uint8_t len_trl, i, j;
     rt_uint16_t ret;
     rt_bool_t skip;

@@ -30,32 +30,33 @@
 #include "stm32f10x.h"
 
 /* Exported types ------------------------------------------------------------*/
-enum miniStm32_irq_hook_type_t
+enum bsp_irq_hook_type_t
 {
-	miniStm32_irq_type_rtc = 0,
-	miniStm32_irq_type_exti,
-    miniStm32_irq_type_dma,
-    miniStm32_irq_type_usb,
-    miniStm32_irq_type_tim2to7,
-	miniStm32_irq_type_spi,
-	miniStm32_irq_type_usart
+	bsp_irq_type_rtc = 0,
+	bsp_irq_type_exti,
+    bsp_irq_type_dma,
+    bsp_irq_type_usb,
+    bsp_irq_type_tim2to7,
+	bsp_irq_type_spi,
+	bsp_irq_type_usart,
+    board_irq_type_sdio
 };
 
-typedef void (*miniStm32_irq_callback_t)(rt_device_t device);
+typedef void (*bsp_irq_callback_t)(rt_device_t device);
 
 typedef struct
 {
-	enum miniStm32_irq_hook_type_t type;
+	enum bsp_irq_hook_type_t type;
 	rt_uint8_t unit;
-	miniStm32_irq_callback_t cbFunc;
+	bsp_irq_callback_t cbFunc;
 	void *userPtr;
-} miniStm32_irq_hook_init_t;
+} bsp_irq_hook_init_t;
 
 typedef struct
 {
-	miniStm32_irq_callback_t cbFunc;
+	bsp_irq_callback_t cbFunc;
 	void *userPtr;
-} miniStm32_irq_hook_t;
+} bsp_irq_hook_t;
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/

@@ -1,23 +1,22 @@
-import rtconfig
 from building import *
-Import('RTT_ROOT')
 
+cwd = GetCurrentDir()
+headers = [
+    cwd, 
+    cwd + '/../../components/drivers/include',
+]
 
-src_bsp = ['application.c', 'startup.c', 'board.c']
-src_drv = ['drv_rtc.c', 'drv_usart.c', 'drv_spi.c']
-src_hdl = ['hdl_interrupt.c']
+# BSP files
+sources = Split("""
+    startup.c
+    board.c
+    application.c
+""")
 
-# Optional bsp files
-if GetDepend('BSP_USING_LED1') or GetDepend('BSP_USING_LED2'):
-    src_drv.append('drv_led.c')
-if GetDepend('BSP_USING_OLED'):
-    src_drv.append('drv_oled.c')
-if GetDepend('BSP_USING_SPISD'):
-    src_drv.append('drv_sdcard.c')
+switch = ['']
+objs = DefineGroup('tinyStm32', src=sources, depend=switch, CPPPATH=headers)
 
+# Common files
+objs.extend(SConscript(os.path.join(cwd, '..', 'common', 'SConscript')))
 
-headers = [ GetCurrentDir(), '../../components/drivers/include' ]
-sources = src_bsp + src_drv + src_hdl
-group = DefineGroup('Startup', src=sources, depend=[''], CPPPATH=headers)
-
-Return('group')
+Return('objs')

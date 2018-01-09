@@ -313,7 +313,7 @@ void led(rt_uint32_t led, rt_int32_t value)
         break;
 #if defined(BSP_USING_LED2)
     case 2:
-    	led2.device.control(&led1.device, cmd, RT_NULL);
+    	led2.device.control(&led2.device, cmd, RT_NULL);
         break;
 #endif
     default:

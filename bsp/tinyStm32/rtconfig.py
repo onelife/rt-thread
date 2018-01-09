@@ -5,15 +5,6 @@ ARCH = 'arm'
 CPU = 'cortex-m3'
 CROSS_TOOL = 'gcc'
 
-# device options
-# STM32_TYPE =
-# 'STM32F10X_LD','STM32F10X_LD_VL',
-# 'STM32F10X_MD','STM32F10X_MD_VL',
-# 'STM32F10X_HD','STM32F10X_HD_VL',
-# 'STM32F10X_XL','STM32F10X_CL'
-STM32_TYPE = 'STM32F10X_MD'
-STM32_USB_LIB = False
-
 # cross_tool provides the cross compiler
 # EXEC_PATH is the compiler execute path, for example, CodeSourcery, Keil MDK, IAR
 
@@ -96,10 +87,7 @@ elif PLATFORM == 'iar':
     LINK = 'ilinkarm'
     TARGET_EXT = 'out'
 
-    DEVICE = ' -D USE_STDPERIPH_DRIVER' + ' -D ' + STM32_TYPE
-
-    CFLAGS = DEVICE
-    CFLAGS += ' --diag_suppress Pa050'
+    CFLAGS = ' --diag_suppress Pa050'
     CFLAGS += ' --no_cse'
     CFLAGS += ' --no_unroll'
     CFLAGS += ' --no_inline'

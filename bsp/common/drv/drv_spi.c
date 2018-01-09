@@ -1295,7 +1295,7 @@ static rt_err_t bsp_spi_unit_init(struct bsp_spi_unit_init *init)
     rt_uint16_t         pin_sck, pin_mosi, pin_miso, pin_cs;
     rt_uint32_t         tx_irq;
     rt_uint8_t          tx_chn;
-    miniStm32_irq_hook_init_t hook;
+    bsp_irq_hook_init_t hook;
 
     device = &(init->unit)->device;
     spi = &(init->unit)->spi;
@@ -1539,11 +1539,11 @@ static rt_err_t bsp_spi_unit_init(struct bsp_spi_unit_init *init)
             DMA_Init(dma_tx->dma_chn, &dma_init);
 
             /* Config hook */
-            hook.type       = miniStm32_irq_type_dma;
+            hook.type       = bsp_irq_type_dma;
             hook.unit       = tx_chn - 1;
             hook.cbFunc     = bsp_spi_dma_tx_isr;
             hook.userPtr    = device;
-            miniStm32_irq_hook_register(&hook);
+            bsp_irq_hook_register(&hook);
 
             /* Enable interrupt and NVIC */
             switch (init->number)
@@ -1584,11 +1584,11 @@ static rt_err_t bsp_spi_unit_init(struct bsp_spi_unit_init *init)
                 break;
             }
 
-            hook.type           = miniStm32_irq_type_spi;
+            hook.type           = bsp_irq_type_spi;
             hook.unit           = unitNumber - 1;
             hook.cbFunc         = bsp_spi_rx_isr;
             hook.userPtr        = device;
-            miniStm32_irq_hook_register(&hook);
+            bsp_irq_hook_register(&hook);
 */
         }
 

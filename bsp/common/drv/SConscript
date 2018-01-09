@@ -1,0 +1,26 @@
+from building import *
+
+cwd = GetCurrentDir()
+includes = [cwd]
+
+# Interrupt handler
+sources = ['hdl_interrupt.c']
+
+# Drivers
+if GetDepend('BSP_USING_USART1') or GetDepend('BSP_USING_USART2') or GetDepend('BSP_USING_USART3'):
+    sources.append('drv_usart.c')
+if GetDepend('BSP_USING_SPI1') or GetDepend('BSP_USING_SPI2') or GetDepend('BSP_USING_SPI3'):
+    sources.append('drv_spi.c')
+if GetDepend('BSP_USING_RTC') or GetDepend('BSP_USING_SPI2') or GetDepend('BSP_USING_SPI3'):
+    sources.append('drv_rtc.c')
+if GetDepend('BSP_USING_LED1') or GetDepend('BSP_USING_LED2'):
+    sources.append('drv_led.c')
+if GetDepend('BSP_USING_OLED'):
+    sources.append('drv_oled.c')
+if GetDepend('BSP_USING_SPISD'):
+    sources.append('drv_sdcard.c')
+
+switch = ['']
+group = DefineGroup('COM_DRV', src=sources, depend=switch, CPPPATH=includes)
+
+Return('group')

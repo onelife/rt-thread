@@ -40,13 +40,14 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-miniStm32_irq_hook_t rtcCbTable[1]      = {RT_NULL};
-miniStm32_irq_hook_t extiCbTable[19]    = {RT_NULL};
-miniStm32_irq_hook_t dmaCbTable[12]     = {RT_NULL};
-miniStm32_irq_hook_t usbCbTable[2]      = {RT_NULL};
-miniStm32_irq_hook_t tim2to7CbTable[6]  = {RT_NULL};
-miniStm32_irq_hook_t spiCbTable[3]      = {RT_NULL};
-miniStm32_irq_hook_t usartCbTable[3]    = {RT_NULL};
+bsp_irq_hook_t rtcCbTable[1]      = {RT_NULL};
+bsp_irq_hook_t extiCbTable[19]    = {RT_NULL};
+bsp_irq_hook_t dmaCbTable[12]     = {RT_NULL};
+bsp_irq_hook_t usbCbTable[2]      = {RT_NULL};
+bsp_irq_hook_t tim2to7CbTable[6]  = {RT_NULL};
+bsp_irq_hook_t spiCbTable[3]      = {RT_NULL};
+bsp_irq_hook_t usartCbTable[3]    = {RT_NULL};
+bsp_irq_hook_t sdioCbTable[1]     = {RT_NULL};
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -691,43 +692,48 @@ void EXTI4_IRQHandler(void)
  * @note
  *
  ******************************************************************************/
-void miniStm32_irq_hook_register(miniStm32_irq_hook_init_t *hook)
+void bsp_irq_hook_register(bsp_irq_hook_init_t *hook)
 {
 	switch (hook->type)
 	{
-    case miniStm32_irq_type_rtc:
+    case bsp_irq_type_rtc:
         rtcCbTable[hook->unit].cbFunc = hook->cbFunc;
         rtcCbTable[hook->unit].userPtr = hook->userPtr;
         break;
 
-    case miniStm32_irq_type_exti:
+    case bsp_irq_type_exti:
         extiCbTable[hook->unit].cbFunc = hook->cbFunc;
         extiCbTable[hook->unit].userPtr = hook->userPtr;
         break;
 
-    case miniStm32_irq_type_dma:
+    case bsp_irq_type_dma:
         dmaCbTable[hook->unit].cbFunc = hook->cbFunc;
         dmaCbTable[hook->unit].userPtr = hook->userPtr;
         break;
 
-    case miniStm32_irq_type_usb:
+    case bsp_irq_type_usb:
         usbCbTable[hook->unit].cbFunc = hook->cbFunc;
         usbCbTable[hook->unit].userPtr = hook->userPtr;
         break;
 
-	case miniStm32_irq_type_tim2to7:
+	case bsp_irq_type_tim2to7:
 		tim2to7CbTable[hook->unit].cbFunc = hook->cbFunc;
 		tim2to7CbTable[hook->unit].userPtr = hook->userPtr;
 		break;
 
-	case miniStm32_irq_type_spi:
+	case bsp_irq_type_spi:
 		spiCbTable[hook->unit].cbFunc = hook->cbFunc;
 		spiCbTable[hook->unit].userPtr = hook->userPtr;
 		break;
 
-	case miniStm32_irq_type_usart:
+	case bsp_irq_type_usart:
 		usartCbTable[hook->unit].cbFunc = hook->cbFunc;
 		usartCbTable[hook->unit].userPtr = hook->userPtr;
+		break;
+        
+	case board_irq_type_sdio:
+		sdioCbTable[hook->unit].cbFunc = hook->cbFunc;
+		sdioCbTable[hook->unit].userPtr = hook->userPtr;
 		break;
 
 	default:

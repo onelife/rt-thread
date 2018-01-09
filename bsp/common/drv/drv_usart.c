@@ -1244,7 +1244,7 @@ static rt_err_t bsp_usart_unit_init(struct bsp_usart_unit_init *init)
     rt_uint16_t             pin_tx, pin_rx;
     rt_uint32_t             tx_irq, rx_irq;
     rt_uint8_t              tx_chn;
-    miniStm32_irq_hook_init_t hook;
+    bsp_irq_hook_init_t hook;
 
     device = &(init->unit)->device;
     usart = &(init->unit)->usart;
@@ -1442,11 +1442,11 @@ static rt_err_t bsp_usart_unit_init(struct bsp_usart_unit_init *init)
             DMA_Init(dma_tx->dma_chn, &dma_init);
 
             /* Config hook */
-            hook.type       = miniStm32_irq_type_dma;
+            hook.type       = bsp_irq_type_dma;
             hook.unit       = tx_chn - 1;
             hook.cbFunc     = bsp_usart_dma_tx_isr;
             hook.userPtr    = device;
-            miniStm32_irq_hook_register(&hook);
+            bsp_irq_hook_register(&hook);
 
             /* Enable interrupt and NVIC */
             switch (init->number)
@@ -1478,11 +1478,11 @@ static rt_err_t bsp_usart_unit_init(struct bsp_usart_unit_init *init)
             int_rx->save_index = 0;
 
             /* Config hook */
-            hook.type       = miniStm32_irq_type_usart;
+            hook.type       = bsp_irq_type_usart;
             hook.unit       = init->number - 1;
             hook.cbFunc     = bsp_usart_int_rx_isr;
             hook.userPtr    = device;
-            miniStm32_irq_hook_register(&hook);
+            bsp_irq_hook_register(&hook);
 
             /* Enable interrupt and NVIC */
             USART_ClearFlag(usart->usart_device, USART_FLAG_RXNE);

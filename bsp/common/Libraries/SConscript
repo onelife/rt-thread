@@ -1,16 +1,16 @@
 from building import *
 import rtconfig
-Import('RTT_ROOT')
 
-
+STM32_TYPE = eval(BuildOptions['STM32_USING_TYPE'])
 cwd = GetCurrentDir()
-headers = [
-    cwd + '/STM32F10x_StdPeriph_Driver/inc', 
+includes = [
+    cwd,
+    cwd + '/CMSIS/CM3/CoreSupport',
     cwd + '/CMSIS/CM3/DeviceSupport/ST/STM32F10x',
+    cwd + '/STM32F10x_StdPeriph_Driver/inc', 
 ]
 
-# startup code
-# STM32 type
+# Start-up code for each STM32 type
 startup_scripts = {
     'STM32F10X_CL'      : 'startup_stm32f10x_cl.s',
     'STM32F10X_HD'      : 'startup_stm32f10x_hd.s',
@@ -21,24 +21,17 @@ startup_scripts = {
     'STM32F10X_MD_VL'   : 'startup_stm32f10x_md_vl.s',
     'STM32F10X_XL'      : 'startup_stm32f10x_xl.s',
 }
-# path
 if rtconfig.CROSS_TOOL == 'gcc':
     path = 'CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/gcc_ride7/'
 elif rtconfig.CROSS_TOOL == 'keil':
     path = 'CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/arm/'
 elif rtconfig.CROSS_TOOL == 'iar':
     path = 'CMSIS/CM3/DeviceSupport/ST/STM32F10x/startup/iar/'
-sources = [path + startup_scripts[rtconfig.STM32_TYPE]]
-
-# M3 driver
-if GetDepend('RT_USING_BSP_CMSIS'):
-    headers.append(cwd + '/CMSIS/CM3/CoreSupport')
-    sources.append(cwd + '/CMSIS/CM3/CoreSupport/core_cm3.c')
-elif GetDepend('RT_USING_RTT_CMSIS'):
-    headers.append(RTT_ROOT + '/components/CMSIS/Include')
+sources = [path + startup_scripts[STM32_TYPE]]
 
 # STM32 drivers
 sources.extend(Split("""
+    CMSIS/CM3/CoreSupport/core_cm3.c
     CMSIS/CM3/DeviceSupport/ST/STM32F10x/system_stm32f10x.c
     STM32F10x_StdPeriph_Driver/src/stm32f10x_crc.c
     STM32F10x_StdPeriph_Driver/src/stm32f10x_rcc.c
@@ -63,9 +56,10 @@ sources.extend(Split("""
     STM32F10x_StdPeriph_Driver/src/stm32f10x_can.c
     STM32F10x_StdPeriph_Driver/src/stm32f10x_cec.c
     STM32F10x_StdPeriph_Driver/src/misc.c
-    """))
+"""))
 
-defines = ['USE_STDPERIPH_DRIVER', rtconfig.STM32_TYPE]
-group = DefineGroup('STM32_StdPeriph', src=sources, depend=[''], CPPPATH=headers, CPPDEFINES=defines)
+switch = 'STM32_USING_STD_DRV'
+objs = DefineGroup('STM32_STD_DRV', src=sources, depend=switch, CPPPATH=includes, 
+                   CCFLAGS=' -D USE_STDPERIPH_DRIVER -D '+STM32_TYPE)
 
-Return('group')
+Return('objs')

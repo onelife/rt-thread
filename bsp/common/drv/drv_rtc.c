@@ -176,7 +176,7 @@ static rt_err_t miniStm32_rtc_control(rt_device_t dev, rt_uint8_t cmd,
 ******************************************************************************/
 rt_err_t bsp_hw_rtc_init(void)
 {
-    miniStm32_irq_hook_init_t hook;
+    bsp_irq_hook_init_t hook;
     NVIC_InitTypeDef nvic_init;
 
     if (RCC_GetFlagStatus(RCC_FLAG_PORRST) != RESET)
@@ -242,11 +242,11 @@ rt_err_t bsp_hw_rtc_init(void)
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_BKP, DISABLE);
 
     /* Config hook */
-    hook.type       = miniStm32_irq_type_dma;
+    hook.type       = bsp_irq_type_dma;
     hook.unit       = 0;
     hook.cbFunc     = rtc_overflow_isr;
     hook.userPtr    = RT_NULL;
-    miniStm32_irq_hook_register(&hook);
+    bsp_irq_hook_register(&hook);
 
     /* Enable interrupt and NVIC */
     RTC_ClearFlag(RTC_FLAG_OW);

@@ -1,0 +1,21 @@
+from building import *
+
+cwd = GetCurrentDir()
+includes = [
+    cwd + '/STM32_USB-FS-Device_Driver/inc', 
+]
+
+# STM32 USB driver
+sources = Split("""
+    STM32_USB-FS-Device_Driver/src/usb_regs.c
+    STM32_USB-FS-Device_Driver/src/usb_core.c
+    STM32_USB-FS-Device_Driver/src/usb_mem.c
+    STM32_USB-FS-Device_Driver/src/usb_int.c
+    STM32_USB-FS-Device_Driver/src/usb_init.c
+    STM32_USB-FS-Device_Driver/src/usb_sil.c
+""")
+
+switch = 'STM32_USING_USB'
+objs = DefineGroup('STM32_USB', src=sources, depend=switch, CPPPATH=includes)
+
+Return('objs')

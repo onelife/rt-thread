@@ -1,0 +1,23 @@
+import os
+from building import *
+
+Import('RTT_BSP')
+Import('RTT_ROOT')
+
+cwd = GetCurrentDir()
+objs = []
+
+# Firmware library
+objs.extend(SConscript(os.path.join(cwd, 'Libraries', 'SConscript'),
+                       variant_dir=os.path.join(RTT_ROOT, 'bsp', RTT_BSP, 'build', 'lib'),
+                       duplicate=0))
+objs.extend(SConscript(os.path.join(cwd, 'Libraries', 'SConscript_usb'),
+                       variant_dir=os.path.join(RTT_ROOT, 'bsp', RTT_BSP, 'build', 'lib'),
+                       duplicate=0))
+
+# Drivers
+objs.extend(SConscript(os.path.join(cwd, 'drv', 'SConscript'),
+                       variant_dir=os.path.join(RTT_ROOT, 'bsp', RTT_BSP, 'build', 'drv'),
+                       duplicate=0))
+
+Return('objs')

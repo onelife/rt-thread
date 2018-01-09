@@ -33,12 +33,12 @@
 //#define RT_TIMER_DEBUG
 
 //#define EFM32_DEBUG
-//#define BOARD_LED_DEBUG
+//#define BSP_LED_DEBUG
 //#define BSP_USART_DEBUG
 //#define BSP_SPI_DEBUG
 #define BSP_RTC_DEBUG
 //#define BSP_SDCARD_DEBUG
-//#define MINISTM32_OLED_DEBUG
+//#define BSP_OLED_DEBUG
 //#define EFM32_ETHERNET_DEBUG
 //#define EFM32_KEYS_DEBUG
 
@@ -122,9 +122,19 @@
 //#define INTERFACE_8BIT_68XX             (1 << 4)    /* 8-bit 68xx parallel */
 #define INTERFACE_8BIT_80XX             (1 << 5)    /* 8-bit 80xx parallel */
 
+/* STM32 device type options */
+// 'STM32F10X_LD','STM32F10X_LD_VL',
+// 'STM32F10X_MD','STM32F10X_MD_VL',
+// 'STM32F10X_HD','STM32F10X_HD_VL',
+// 'STM32F10X_XL','STM32F10X_CL'
 
 /* SECTION: TinySTM32 Board */
 #define RT_USING_BSP_CMSIS
+#if defined(RT_USING_BSP_CMSIS)
+#   define STM32_USING_STD_DRV
+#   define STM32_USING_TYPE             'STM32F10X_MD'
+#endif
+// #define STM32_USING_USB
 #define BSP_USING_LED1
 #define BSP_USING_RTC
 #define BSP_USING_USART1
@@ -168,7 +178,7 @@
 #   define LED1_PIN                     (GPIO_Pin_5)
 #endif
 
-/* SRTC */
+/* RTC */
 #if defined(BSP_USING_RTC)
 #   define RTC_NAME                     "clock"
 #endif
@@ -198,7 +208,9 @@
 
 /* SECTION: Runtime library */
 // #define RT_USING_NOLIBC
-// #define RT_USING_NEWLIB
+#if defined(RT_USING_LUA)
+#   define RT_USING_LIBC
+#endif
 
 
 /* SECTION: Console options */
@@ -325,12 +337,6 @@
 #define RT_LWIP_ETHTHREAD_MBOX_SIZE     (10)
 #define RT_LWIP_ETHTHREAD_STACKSIZE     (512)
 #endif /* defined(EFM32_USING_ETHERNET) */
-
-
-/* SECTION: LUA */
-//#define RT_USING_LIBC
-//#define RT_USING_LUA
-//#define RT_LUA_OPTRAM
 
 
 #endif /* __RTTHREAD_CFG_H__ */

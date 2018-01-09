@@ -1,7 +1,7 @@
-import os
-import sys
+import os, sys
 import rtconfig
 
+RTT_BSP = os.path.split(os.getcwd())[-1]
 RTT_ROOT = os.path.normpath(os.getcwd() + '/../..')
 sys.path = sys.path + [os.path.join(RTT_ROOT, 'tools')]
 from building import *
@@ -20,16 +20,12 @@ if rtconfig.PLATFORM == 'iar':
 	env.Replace(ARFLAGS = [''])
 	env.Replace(LINKCOM = ['$LINK $SOURCES $LINKFLAGS -o $TARGET --map project.map'])
 
+Export('RTT_BSP')
 Export('RTT_ROOT')
 Export('rtconfig')
 
 # prepare building environment
 objs = PrepareBuilding(env, RTT_ROOT)
-
-# STM32 firmware library building script
-objs += SConscript( GetCurrentDir() + '/Libraries/SConscript', variant_dir='build/Libraries', duplicate=0)
-if rtconfig.STM32_USB_LIB:
-	objs += SConscript( GetCurrentDir() + '/Libraries/SConscript_usb', variant_dir='build/Libraries', duplicate=0)
 
 # make a building
 DoBuilding(TARGET, objs)

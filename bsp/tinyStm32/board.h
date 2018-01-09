@@ -17,7 +17,8 @@
 #define __BOARD_H__
 
 /* Includes ------------------------------------------------------------------*/
-#include <stm32f10x_conf.h>
+//#include <stm32f10x_conf.h>
+#include <rtconfig.h>
 #include <stm32f10x.h>
 #include <rtthread.h>
 
