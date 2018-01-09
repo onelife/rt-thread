@@ -101,7 +101,7 @@ void rt_hw_board_init(void)
  ******************************************************************************/
 void rt_hw_driver_init(void)
 {
-        /* Initialize USART */
+    /* Initialize USART */
 #if (defined(BSP_USING_USART1) || defined(BSP_USING_USART2) || \
     defined(BSP_USING_USART3))
     bsp_hw_usart_init();

@@ -23,12 +23,12 @@
 #include "board.h"
 #include "hdl_interrupt.h"
 #include "drv_sdioSd.h"
-#if defined(BOARD_USING_SDIOSD)
+#if defined(BSP_USING_SDIOSD)
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
  
 /* Private macro -------------------------------------------------------------*/
-#ifdef BOARD_SDIOSD_DEBUG
+#ifdef BSP_SDIOSD_DEBUG
 #define sdioSd_debug(format,args...)            rt_kprintf(format, ##args)
 #else
 #define sdioSd_debug(format,args...)

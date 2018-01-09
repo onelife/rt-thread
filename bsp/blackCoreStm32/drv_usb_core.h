@@ -98,13 +98,13 @@ typedef struct usb_endpoint_register
     void (*outFunc)(void);
 } usb_endpoint_register_t;
 
-struct miniStm32_usb_buffer
+struct bsp_usb_buffer
 {
     rt_uint8_t              size;
     rt_uint16_t             addr;
 };
 
-struct miniStm32_usb_device
+struct bsp_usb_device
 {
     volatile rt_uint8_t     bIntPackSOF;        /* SOFs received between 2 consecutive packets */
     volatile rt_uint16_t    wIstr;              /* ISTR register last read value */
@@ -112,14 +112,14 @@ struct miniStm32_usb_device
     volatile rt_bool_t      fSuspendEnabled;    /* true when suspend is possible */
 
     rt_uint16_t             epType[ENDPOINT_NUMBER - 1];
-    struct miniStm32_usb_buffer epInBuf[ENDPOINT_NUMBER - 1];
-    struct miniStm32_usb_buffer epOutBuf[ENDPOINT_NUMBER - 1];
+    struct bsp_usb_buffer epInBuf[ENDPOINT_NUMBER - 1];
+    struct bsp_usb_buffer epOutBuf[ENDPOINT_NUMBER - 1];
     usb_property_t          property;
     volatile rt_uint16_t    status;
     struct rt_semaphore     lock;
 };
 
-struct miniStm32_usb_cmd_message
+struct bsp_usb_cmd_message
 {
     rt_uint32_t             cmd;
     rt_uint32_t             other;
@@ -127,7 +127,7 @@ struct miniStm32_usb_cmd_message
     rt_uint8_t              *ptr;
 };
 
-struct miniStm32_usb_ret_message
+struct bsp_usb_ret_message
 {
     rt_uint32_t             cmd;
     rt_uint32_t             other;
@@ -135,13 +135,13 @@ struct miniStm32_usb_ret_message
     rt_err_t                ret;
 };
 
-union miniStm32_usb_exec_message
+union bsp_usb_exec_message
 {
-    struct miniStm32_usb_cmd_message cmd;
-    struct miniStm32_usb_ret_message ret;
+    struct bsp_usb_cmd_message cmd;
+    struct bsp_usb_ret_message ret;
 };
 
-struct miniStm32_usb_task
+struct bsp_usb_task
 {
     struct rt_thread        thread;
     struct rt_messagequeue  rx_msgs;
@@ -151,19 +151,19 @@ struct miniStm32_usb_task
                                 (USB_RX_MESSAGE_SIZE + 4)];
 };
 
-struct miniStm32_usb_unit
+struct bsp_usb_unit
 {
-    struct miniStm32_usb_task task;
+    struct bsp_usb_task task;
     struct rt_device        device;
-    struct miniStm32_usb_device usb;
+    struct bsp_usb_device usb;
 };
 
-struct miniStm32_usb_unit_init
+struct bsp_usb_unit_init
 {
     rt_uint8_t              number;
     rt_uint32_t             config;
     const rt_uint8_t        *name;
-    struct miniStm32_usb_unit *unit;
+    struct bsp_usb_unit *unit;
 };
 
 /* Exported constants --------------------------------------------------------*/
@@ -171,7 +171,7 @@ extern const device_descriptor_t _DeviceDescriptor;
 extern const configuration_descriptor_set_t _ConfigDescriptor;
 
 /* Exported variables --------------------------------------------------------*/
-extern struct miniStm32_usb_unit usb;
+extern struct bsp_usb_unit usb;
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
@@ -207,15 +207,15 @@ void SOF_Callback(void);
 void ESOF_Callback(void);
 #endif
 
-void Suspend(struct miniStm32_usb_unit *cfg);
-void Resume_Init(struct miniStm32_usb_unit *cfg);
-void Resume(struct miniStm32_usb_unit *cfg, RESUME_STATE eResumeSetVal);
+void Suspend(struct bsp_usb_unit *cfg);
+void Resume_Init(struct bsp_usb_unit *cfg);
+void Resume(struct bsp_usb_unit *cfg, RESUME_STATE eResumeSetVal);
 RESULT PowerOn(void);
 RESULT PowerOff(void);
 
-rt_err_t miniStm32_hw_usb_core_init(void);
-void usb_endpoint_register(struct miniStm32_usb_unit *cfg, usb_endpoint_register_t *ep);
-void usb_device_register(struct miniStm32_usb_unit *cfg, const usb_device_property_t *prep);
+rt_err_t bsp_hw_usb_core_init(void);
+void usb_endpoint_register(struct bsp_usb_unit *cfg, usb_endpoint_register_t *ep);
+void usb_device_register(struct bsp_usb_unit *cfg, const usb_device_property_t *prep);
 
 
 #endif /* __DRV_USB_CORE_H__ */

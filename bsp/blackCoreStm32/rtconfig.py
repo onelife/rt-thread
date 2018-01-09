@@ -1,35 +1,34 @@
-# toolchains options
-ARCH='arm'
-CPU='cortex-m3'
-CROSS_TOOL='gcc'
+import os
 
-#device options
-# STM32_TYPE =
-# 'STM32F10X_LD','STM32F10X_LD_VL',
-# 'STM32F10X_MD','STM32F10X_MD_VL',
-# 'STM32F10X_HD','STM32F10X_HD_VL',
-# 'STM32F10X_XL','STM32F10X_CL'
-STM32_TYPE = 'STM32F10X_HD'
-STM32_USB_LIB = False
+# toolchains options
+ARCH = 'arm'
+CPU = 'cortex-m3'
+CROSS_TOOL = 'gcc'
 
 # cross_tool provides the cross compiler
 # EXEC_PATH is the compiler execute path, for example, CodeSourcery, Keil MDK, IAR
 
-if  CROSS_TOOL == 'gcc':
-	PLATFORM 	= 'gcc'
-	EXEC_PATH   = 'C:/Users/Gang/Tools/Sourcery_CodeBench_Lite_for_ARM_EABI/bin'
+if os.getenv('RTT_CC'):
+    CROSS_TOOL = os.getenv('RTT_CC')
+    PLATFORM = CROSS_TOOL
+    EXEC_PATH = os.getenv('RTT_EXEC_PATH')
+elif CROSS_TOOL == 'docker':
+    PLATFORM = 'gcc'
+    EXEC_PATH = '/usr/bin'
+elif CROSS_TOOL == 'gcc':
+    PLATFORM = 'gcc'
+    EXEC_PATH = 'C:/Users/Gang/Tools/Sourcery_CodeBench_Lite_for_ARM_EABI/bin'
 elif CROSS_TOOL == 'keil':
-	PLATFORM 	= 'armcc'
-	EXEC_PATH 	= 'E:/Keil'
+    PLATFORM = 'armcc'
+    EXEC_PATH = 'E:/Keil'
 elif CROSS_TOOL == 'iar':
-	PLATFORM 	= 'iar'
-	IAR_PATH 	= 'E:/Program Files/IAR Systems/Embedded Workbench 6.0'
+    PLATFORM = 'iar'
+    IAR_PATH = 'E:/Program Files/IAR Systems/Embedded Workbench 6.0'
 
 BUILD = 'debug'
 # BUILD = 'release'
 
 if PLATFORM == 'gcc':
-    # toolchains
     PREFIX = 'arm-none-eabi-'
     CC = PREFIX + 'gcc'
     AS = PREFIX + 'gcc'
@@ -57,7 +56,6 @@ if PLATFORM == 'gcc':
     POST_ACTION = OBJCPY + ' -O binary $TARGET RTT_blackCoreStm32.bin\n' + SIZE + ' $TARGET \n'
 
 elif PLATFORM == 'armcc':
-    # toolchains
     CC = 'armcc'
     AS = 'armasm'
     AR = 'armar'
@@ -83,17 +81,13 @@ elif PLATFORM == 'armcc':
     POST_ACTION = 'fromelf --bin $TARGET --output rtthread.bin \nfromelf -z $TARGET'
 
 elif PLATFORM == 'iar':
-    # toolchains
     CC = 'iccarm'
     AS = 'iasmarm'
     AR = 'iarchive'
     LINK = 'ilinkarm'
     TARGET_EXT = 'out'
 
-    DEVICE = ' -D USE_STDPERIPH_DRIVER' + ' -D ' + STM32_TYPE
-
-    CFLAGS = DEVICE
-    CFLAGS += ' --diag_suppress Pa050'
+    CFLAGS = ' --diag_suppress Pa050'
     CFLAGS += ' --no_cse'
     CFLAGS += ' --no_unroll'
     CFLAGS += ' --no_inline'

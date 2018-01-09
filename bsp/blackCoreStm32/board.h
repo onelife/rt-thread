@@ -17,7 +17,7 @@
 #define __BOARD_H__
 
 /* Includes ------------------------------------------------------------------*/
-#include <stm32f10x_conf.h>
+#include <rtconfig.h>
 #include <stm32f10x.h>
 #include <rtthread.h>
 
@@ -26,19 +26,19 @@
 /* Exported variables --------------------------------------------------------*/
 
 /* Exported macro ------------------------------------------------------------*/
-#define MINISTM32_NO_DATA		        (0)
-#define MINISTM32_NO_POINTER		    (RT_NULL)
-#define MINISTM32_NO_OFFSET				(-1)
-#define MINISTM32_NO_DMA				(-1)
+#define BSP_NO_DATA		                (0)
+#define BSP_NO_POINTER		            (RT_NULL)
+#define BSP_NO_OFFSET				    (-1)
+#define BSP_NO_DMA				        (-1)
 
 /* SECTION: SYSTEM */
-#define MINISTM32_SRAM_SIZE 			(20 * 1024)
-#define MINISTM32_SRAM_END 				(SRAM_BASE + MINISTM32_SRAM_SIZE)
+#define BSP_SRAM_SIZE 			        (20 * 1024)
+#define BSP_SRAM_END 				    (SRAM_BASE + BSP_SRAM_SIZE)
 
-#define MINISTM32_BASE_PRI_DEFAULT 		(0x00UL)
-#define MINISTM32_IRQ_PRI_DEFAULT 		(0x08UL)
-#define MINISTM32_IRQ_PRI_COM 		    (0x07UL)
-#define MINISTM32_IRQ_PRI_DMA 		    (0x06UL)
+#define BSP_BASE_PRI_DEFAULT 		    (0x00UL)
+#define BSP_IRQ_PRI_DEFAULT 		    (0x08UL)
+#define BSP_IRQ_PRI_COM 		        (0x07UL)
+#define BSP_IRQ_PRI_DMA 		        (0x06UL)
 
 #define TASK_PRIORITY_DRIVER            (5)
 #define TASK_PRIORITY_APPLICATION       (10)
@@ -47,19 +47,19 @@
 #define SPI_RX_BUFFER_SIZE		        (64)
 
 /* SECTION: LED */
-#if defined(BOARD_USING_LED1)
+#if defined(BSP_USING_LED1)
 #define LED1_CLOCK             			(RCC_APB2Periph_GPIOE)
 #define LED1_PORT              			(GPIOE)
 #define LED1_PIN               			(GPIO_Pin_5)
 #endif
-#if defined(BOARD_USING_LED2)
+#if defined(BSP_USING_LED2)
 #define LED2_CLOCK             			(RCC_APB2Periph_GPIOE)
 #define LED2_PORT              			(GPIOE)
 #define LED2_PIN               			(GPIO_Pin_6)
 #endif
 
 /* SECTION: OLED */
-#if defined(BOARD_USING_OLED)
+#if defined(BSP_USING_OLED)
 #define OLED_CS_CLOCK                   (RCC_APB2Periph_GPIOB)
 #define OLED_CS_PORT                    (GPIOB)
 #define OLED_CS_PIN                     (GPIO_Pin_12)
@@ -69,7 +69,7 @@
 #endif
 
 /* SECTION: Micro SD */
-#if defined(BOARD_USING_SPISD)
+#if defined(BSP_USING_SPISD)
 #define SD_CS_CLOCK                     (RCC_APB2Periph_GPIOB)
 #define SD_CS_PORT                      (GPIOB)
 #define SD_CS_PIN                       (GPIO_Pin_0)
@@ -112,11 +112,11 @@
 #define RT_DEVICE_OFLAG_NONBLOCKING         (0x1000)
 /*! fixme: The above defines should be moved to Rtdef.h */
 
-#if (defined(BOARD_USING_USART1) && (USART1_USART_MODE & BOARD_USART_CONSOLE) )
+#if (defined(BSP_USING_USART1) && (USART1_USART_MODE & BSP_USART_CONSOLE) )
 #define CONSOLE_DEVICE 				    USART1_NAME
-#elif (defined(BOARD_USING_USART2) && (USART2_USART_MODE & BOARD_USART_CONSOLE))
+#elif (defined(BSP_USING_USART2) && (USART2_USART_MODE & BSP_USART_CONSOLE))
 #define CONSOLE_DEVICE 				    USART2_NAME
-#elif (defined(BOARD_USING_USART3) && (USART3_USART_MODE & BOARD_USART_CONSOLE))
+#elif (defined(BSP_USING_USART3) && (USART3_USART_MODE & BSP_USART_CONSOLE))
 #define CONSOLE_DEVICE 				    USART3_NAME
 #else
 #define CONSOLE_DEVICE 				    "NONE"

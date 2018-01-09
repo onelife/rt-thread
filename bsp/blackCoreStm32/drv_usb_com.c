@@ -28,14 +28,14 @@
 #include "drv_usb_core.h"
 #include "drv_usb_com.h"
 
-#if defined(BOARD_USING_USB_VIRTUAL_COM)
+#if defined(BSP_USING_USB_VIRTUAL_COM)
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Interval between sending IN packets in frame number (1 frame = 1ms) */
 #define VCOMPORT_IN_FRAME_INTERVAL          5
 
 /* Private macro -------------------------------------------------------------*/
-#ifdef BOARD_USB_DEBUG
+#ifdef BSP_USB_DEBUG
 #define usb_debug(format,args...)           rt_kprintf(format, ##args)
 #else
 #define usb_debug(format,args...)
@@ -330,7 +330,7 @@ rt_err_t board_hw_usb_com_init(void)
     return RT_EOK;
 }
 
-#endif /* defined(BOARD_USING_USB_VIRTUAL_COM) */
+#endif /* defined(BSP_USING_USB_VIRTUAL_COM) */
 /***************************************************************************//**
  * @}
  ******************************************************************************/

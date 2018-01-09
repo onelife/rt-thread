@@ -23,7 +23,7 @@
 #include "board.h"
 #include "hdl_interrupt.h"
 #include "drv_sdio.h"
-#if defined(BOARD_USING_SDIO)
+#if defined(BSP_USING_SDIO)
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define SPI1_DR_Base                        (SPI1_BASE + 0x0C)
@@ -35,7 +35,7 @@
 #define DMA2_Channel_SDIO_IRQn              (DMA2_Channel4_IRQn)
 
 /* Private macro -------------------------------------------------------------*/
-#ifdef BOARD_SDIO_DEBUG
+#ifdef BSP_SDIO_DEBUG
 #define sdio_debug(format,args...)        	rt_kprintf(format, ##args)
 #else
 #define sdio_debug(format,args...)
@@ -1448,7 +1448,7 @@ static rt_err_t board_sdio_unit_init(struct board_sdio_unit_init *init)
     NVIC_InitTypeDef    nvic_init;
     rt_uint32_t         tx_irq;
     rt_uint8_t          tx_chn;
-    miniStm32_irq_hook_init_t hook;
+    bsp_irq_hook_init_t hook;
 
     device = &(init->unit)->device;
     sdio = &(init->unit)->sdio;
@@ -1643,11 +1643,11 @@ static rt_err_t board_sdio_unit_init(struct board_sdio_unit_init *init)
             DMA_Init(dma_tx->dma_chn, &dma_init);
 
             /* Config hook */
-            hook.type       = miniStm32_irq_type_dma;
+            hook.type       = bsp_irq_type_dma;
             hook.unit       = tx_chn;
             hook.cbFunc     = board_sdio_dma_isr;
             hook.userPtr    = device;
-            miniStm32_irq_hook_register(&hook);
+            bsp_irq_hook_register(&hook);
 
             /* Enable interrupt and NVIC */
             SDIO_ClearFlag(0xFFFFFFFF);
@@ -1658,7 +1658,7 @@ static rt_err_t board_sdio_unit_init(struct board_sdio_unit_init *init)
             NVIC_ClearPendingIRQ(tx_irq);
             nvic_init.NVIC_IRQChannel = tx_irq;
             nvic_init.NVIC_IRQChannelPreemptionPriority = 0;
-            nvic_init.NVIC_IRQChannelSubPriority = MINISTM32_IRQ_PRI_DMA;
+            nvic_init.NVIC_IRQChannelSubPriority = BSP_IRQ_PRI_DMA;
             nvic_init.NVIC_IRQChannelCmd = ENABLE;
             NVIC_Init(&nvic_init);
         }
@@ -1669,11 +1669,11 @@ static rt_err_t board_sdio_unit_init(struct board_sdio_unit_init *init)
             int_tx->save_index = 0;
 
             /* Config hook */
-            hook.type       = miniStm32_irq_type_sdio;
+            hook.type       = bsp_irq_type_sdio;
             hook.unit       = 0;
             hook.cbFunc     = board_sdio_int_tx_isr;
             hook.userPtr    = device;
-            miniStm32_irq_hook_register(&hook);
+            bsp_irq_hook_register(&hook);
 
             /* Enable interrupt and NVIC */
             SDIO_ClearFlag(0xFFFFFFFF);
@@ -1681,7 +1681,7 @@ static rt_err_t board_sdio_unit_init(struct board_sdio_unit_init *init)
             NVIC_ClearPendingIRQ(SDIO_IRQn);
             nvic_init.NVIC_IRQChannel = SDIO_IRQn;
             nvic_init.NVIC_IRQChannelPreemptionPriority = 0;
-            nvic_init.NVIC_IRQChannelSubPriority = MINISTM32_IRQ_PRI_COM;
+            nvic_init.NVIC_IRQChannelSubPriority = BSP_IRQ_PRI_COM;
             nvic_init.NVIC_IRQChannelCmd = ENABLE;
             NVIC_Init(&nvic_init);
         }
@@ -1758,7 +1758,7 @@ rt_err_t board_hw_sdio_init(void)
     return -RT_ERROR;
 }
 
-#endif /* defined(BOARD_USING_SDIO) */
+#endif /* defined(BSP_USING_SDIO) */
 /***************************************************************************//**
  * @}
  ******************************************************************************/

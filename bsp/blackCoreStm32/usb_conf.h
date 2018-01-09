@@ -25,10 +25,10 @@
 /* External variables --------------------------------------------------------*/
 #define VER_USB                     (0x0200)    // USB specification revision
 #define VID                         (0x0483)    // Vendor ID
-#if defined(BOARD_USING_USB_VIRTUAL_COM)
+#if defined(BSP_USING_USB_VIRTUAL_COM)
 #define PID                         (0x5740)    // Product ID
 #endif
-#if defined(BOARD_USING_USB_HID_MOUSE)
+#if defined(BSP_USING_USB_HID_MOUSE)
 #define PID                         (0x5710)    // Product ID
 #endif
 #define DEV_REV                     (0x0200)    // Device Release number

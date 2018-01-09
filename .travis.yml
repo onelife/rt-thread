@@ -22,5 +22,6 @@ script:
   - scons -C bsp/$RTT_BSP
 
 env:
+#  - RTT_BSP='miniStm32' RTT_TOOL_CHAIN='sourcery-arm' 
   - RTT_BSP='tinyStm32' RTT_TOOL_CHAIN='sourcery-arm' 
-  - RTT_BSP='miniStm32' RTT_TOOL_CHAIN='sourcery-arm' 
+  - RTT_BSP='blackCoreStm32' RTT_TOOL_CHAIN='sourcery-arm' 

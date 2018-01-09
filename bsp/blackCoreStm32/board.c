@@ -54,7 +54,7 @@ static void NVIC_Configuration(void)
     NVIC_SetPriorityGrouping(NVIC_PriorityGroup_0);
 
     /* Set Base Priority Mask Register */
-    __set_BASEPRI(MINISTM32_BASE_PRI_DEFAULT);
+    __set_BASEPRI(BSP_BASE_PRI_DEFAULT);
 }
 
 /**
@@ -102,47 +102,51 @@ void rt_hw_board_init(void)
 void rt_hw_driver_init(void)
 {
     /* Initialize USART */
-#if (defined(BOARD_USING_USART1) || defined(BOARD_USING_USART2) || \
-    defined(BOARD_USING_USART3))
-    miniStm32_hw_usart_init();
+#if (defined(BSP_USING_USART1) || defined(BSP_USING_USART2) || \
+    defined(BSP_USING_USART3))
+    bsp_hw_usart_init();
 #endif
 
-	/* Setup Console */
+    /* Setup Console */
     rt_console_set_device(CONSOLE_DEVICE);
 
+#if defined(RT_USING_COMPONENTS_INIT)
+    rt_components_board_init();
+#else
     /* Initialize SPI */
-#if (defined(MINISTM32_USING_SPI1) || defined(MINISTM32_USING_SPI2) || \
-    defined(MINISTM32_USING_SPI3))
-    miniStm32_hw_spi_init();
-#endif
+#   if (defined(BSP_USING_SPI1) || defined(BSP_USING_SPI2) || \
+    defined(BSP_USING_SPI3))
+    bsp_hw_spi_init();
+#   endif
 
     /* Initialize LED */
-#if (defined(BOARD_USING_LED1) || defined(BOARD_USING_LED2))
+#   if (defined(BSP_USING_LED1) || defined(BSP_USING_LED2))
 	board_hw_led_init();
-#endif
+#   endif
 
     /* Initialize OLED */
-#if defined(BOARD_USING_OLED)
-#if (OLED_DEVICE_INTERFACE == INTERFACE_8BIT_80XX)
-    miniStm32_hw_oled_init();
-#endif
-#endif
+#   if defined(BSP_USING_OLED)
+#       if (OLED_DEVICE_INTERFACE == INTERFACE_8BIT_80XX)
+    bsp_hw_oled_init();
+#       endif
+#   endif
 
     /* Initialize RTC */
-#if defined(MINISTM32_USING_RTC)
-    miniStm32_hw_rtc_init();
-#endif
+#   if defined(BSP_USING_RTC)
+    bsp_hw_rtc_init();
+#   endif
 
     /* Initialize USB */
-#if defined(BOARD_USING_USB)
-    miniStm32_hw_usb_core_init();
+#   if defined(BSP_USING_USB)
+    bsp_hw_usb_core_init();
 
- #if defined(BOARD_USING_USB_VIRTUAL_COM)
+#       if defined(BSP_USING_USB_VIRTUAL_COM)
     board_hw_usb_com_init();
- #endif
- #if defined(BOARD_USING_USB_HID_MOUSE)
-    miniStm32_hw_usb_mouse_init();
- #endif
+#       endif
+#       if defined(BSP_USING_USB_HID_MOUSE)
+    bsp_hw_usb_mouse_init();
+#       endif
+#   endif
 #endif
 }
 
@@ -158,15 +162,15 @@ void rt_hw_driver_init(void)
 void rt_hw_driver2_init(void)
 {
     /* Initialize OLED 2 */
-#if defined(BOARD_USING_OLED)
+#if defined(BSP_USING_OLED)
 #if (OLED_DEVICE_INTERFACE == INTERFACE_4WIRE_SPI)
-    miniStm32_hw_oled_init();
+    bsp_hw_oled_init();
 #endif
 #endif
 
     /* Initialize SD card */
-#if defined(BOARD_USING_SPISD)
-//    miniStm32_hw_spiSd_init();
+#if defined(BSP_USING_SPISD)
+//    bsp_hw_spiSd_init();
 #endif
 }
 

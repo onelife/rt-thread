@@ -25,27 +25,27 @@
 #include "hdl_interrupt.h"
 #include "drv_usb_core.h"
 
-#if defined (BOARD_USING_USB_VIRTUAL_COM)
+#if defined (BSP_USING_USB_VIRTUAL_COM)
 #include "drv_usb_com.h"
 #endif
-#if defined (BOARD_USING_USB_HID_MOUSE)
+#if defined (BSP_USING_USB_HID_MOUSE)
 #include "drv_usb_mouse.h"
 #endif
 
-#if defined(BOARD_USING_USB)
+#if defined(BSP_USING_USB)
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
-#ifdef BOARD_USB_DEBUG
+#ifdef BSP_USB_DEBUG
 #define usb_debug(format,args...)           rt_kprintf(format, ##args)
 #else
 #define usb_debug(format,args...)
 #endif
 
 /* Private function prototypes -----------------------------------------------*/
-void usb_core_reset(struct miniStm32_usb_unit *cfg);
-void Enter_LowPowerMode(struct miniStm32_usb_unit *cfg);
-void Leave_LowPowerMode(struct miniStm32_usb_unit *cfg);
+void usb_core_reset(struct bsp_usb_unit *cfg);
+void Enter_LowPowerMode(struct bsp_usb_unit *cfg);
+void Leave_LowPowerMode(struct bsp_usb_unit *cfg);
 
 static void usb_nop_process(void);
 
@@ -66,7 +66,7 @@ static void usb_user_setConfiguration(void);
 static void usb_user_setDeviceAddress (void);
 
 /* Public variables ----------------------------------------------------------*/
-struct miniStm32_usb_unit usb = {0};
+struct bsp_usb_unit usb = {0};
 
 /* ISTR register last read value */
 __IO uint16_t wIstr;
@@ -173,11 +173,11 @@ const configuration_descriptor_set_t _ConfigDescriptor =
         							        // <= 500mA: High power
     },
 
-#if defined(BOARD_USING_USB_VIRTUAL_COM)
+#if defined(BSP_USING_USB_VIRTUAL_COM)
     USB_VIRTUAL_COM_ConfigDescriptor
 #endif
 
-#if defined(BOARD_USING_USB_HID_MOUSE)
+#if defined(BSP_USING_USB_HID_MOUSE)
     USB_HID_MOUSE_ConfigDescriptor
 #endif
 };  //end of Configuration*/
@@ -357,7 +357,7 @@ RESULT PowerOff()
 * Output         : None.
 * Return         : USB_SUCCESS.
 *******************************************************************************/
-void Suspend(struct miniStm32_usb_unit *cfg)
+void Suspend(struct bsp_usb_unit *cfg)
 {
     uint16_t wCNTR;
     /* suspend preparation */
@@ -389,7 +389,7 @@ void Suspend(struct miniStm32_usb_unit *cfg)
 * Output         : None.
 * Return         : USB_SUCCESS.
 *******************************************************************************/
-void Resume_Init(struct miniStm32_usb_unit *cfg)
+void Resume_Init(struct bsp_usb_unit *cfg)
 {
     uint16_t wCNTR;
 
@@ -425,7 +425,7 @@ void Resume_Init(struct miniStm32_usb_unit *cfg)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-void Resume(struct miniStm32_usb_unit *cfg, RESUME_STATE eResumeSetVal)
+void Resume(struct bsp_usb_unit *cfg, RESUME_STATE eResumeSetVal)
 {
     uint16_t wCNTR;
 
@@ -482,7 +482,7 @@ void Resume(struct miniStm32_usb_unit *cfg, RESUME_STATE eResumeSetVal)
 * Input          : None.
 * Return         : None.
 *******************************************************************************/
-void Enter_LowPowerMode(struct miniStm32_usb_unit *cfg)
+void Enter_LowPowerMode(struct bsp_usb_unit *cfg)
 {
     /* Set the device state to suspend */
     cfg->usb.bDeviceState = SUSPENDED;
@@ -494,7 +494,7 @@ void Enter_LowPowerMode(struct miniStm32_usb_unit *cfg)
 * Input          : None.
 * Return         : None.
 *******************************************************************************/
-void Leave_LowPowerMode(struct miniStm32_usb_unit *cfg)
+void Leave_LowPowerMode(struct bsp_usb_unit *cfg)
 {
     /* Set the device state to the correct state */
     if (Device_Info.Current_Configuration != 0)
@@ -787,11 +787,11 @@ static void usb_user_setDeviceAddress (void)
  * @param[in] dev
  *  Pointer to device descriptor
  ******************************************************************************/
-void miniStm32_usb_wakeup_isr(rt_device_t dev)
+void bsp_usb_wakeup_isr(rt_device_t dev)
 {
-    struct miniStm32_usb_unit *cfg;
+    struct bsp_usb_unit *cfg;
 
-    cfg = (struct miniStm32_usb_unit *)dev->user_data;
+    cfg = (struct bsp_usb_unit *)dev->user_data;
     if (cfg->usb.status & USB_STATUS_START)
     {
         //usb_debug("USB: wakeup_isr\n");
@@ -810,11 +810,11 @@ void miniStm32_usb_wakeup_isr(rt_device_t dev)
  * @param[in] dev
  *  Pointer to device descriptor
  ******************************************************************************/
-void miniStm32_usb_lowPriority_isr(rt_device_t dev)
+void bsp_usb_lowPriority_isr(rt_device_t dev)
 {
-    struct miniStm32_usb_unit *cfg;
+    struct bsp_usb_unit *cfg;
 
-    cfg = (struct miniStm32_usb_unit *)dev->user_data;
+    cfg = (struct bsp_usb_unit *)dev->user_data;
     cfg->usb.wIstr = _GetISTR();
     if ((cfg->usb.status & USB_STATUS_START) && !(cfg->usb.wIstr & ISTR_SOF))
     {
@@ -949,7 +949,7 @@ void usb_nop_process(void)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-void usb_core_reset(struct miniStm32_usb_unit *cfg)
+void usb_core_reset(struct bsp_usb_unit *cfg)
 {
     rt_uint8_t i;
     rt_uint16_t addr;
@@ -1074,12 +1074,12 @@ void Handle_USBAsynchXfer2 (uint16_t len)
 ******************************************************************************/
 void usb_core_task_main_loop(void *parameter)
 {
-    struct miniStm32_usb_unit *cfg;
+    struct bsp_usb_unit *cfg;
     rt_uint16_t wIstr;
-    union miniStm32_usb_exec_message *exec_msg;
+    union bsp_usb_exec_message *exec_msg;
     rt_thread_t self;
 
-    cfg = (struct miniStm32_usb_unit *)parameter;
+    cfg = (struct bsp_usb_unit *)parameter;
     self = rt_thread_self();
 
 	if (rt_mq_init(
@@ -1169,11 +1169,11 @@ static rt_err_t usb_core_init(rt_device_t dev)
 *
 * @note
 ******************************************************************************/
-rt_err_t miniStm32_hw_usb_core_init(void)
+rt_err_t bsp_hw_usb_core_init(void)
 {
     EXTI_InitTypeDef    exti_init;
     NVIC_InitTypeDef    nvic_init;
-    miniStm32_irq_hook_init_t hook;
+    bsp_irq_hook_init_t hook;
 
     usb.usb.bDeviceState = UNCONNECTED;
     usb.usb.fSuspendEnabled = RT_TRUE;
@@ -1185,11 +1185,11 @@ rt_err_t miniStm32_hw_usb_core_init(void)
         RCC_APB1PeriphClockCmd(RCC_APB1Periph_USB, ENABLE);
 
         /* Config weakup interrupt */
-        hook.type       = miniStm32_irq_type_exti;
+        hook.type       = bsp_irq_type_exti;
         hook.unit       = 18;
-        hook.cbFunc     = miniStm32_usb_wakeup_isr;
+        hook.cbFunc     = bsp_usb_wakeup_isr;
         hook.userPtr    = (void *)&usb.device;
-        miniStm32_irq_hook_register(&hook);
+        bsp_irq_hook_register(&hook);
 
         EXTI_ClearFlag(EXTI_Line18);
         exti_init.EXTI_Line     = EXTI_Line18;
@@ -1201,21 +1201,21 @@ rt_err_t miniStm32_hw_usb_core_init(void)
         NVIC_ClearPendingIRQ(USBWakeUp_IRQn);
         nvic_init.NVIC_IRQChannel = USBWakeUp_IRQn;
         nvic_init.NVIC_IRQChannelPreemptionPriority = 0;
-        nvic_init.NVIC_IRQChannelSubPriority = MINISTM32_IRQ_PRI_COM;
+        nvic_init.NVIC_IRQChannelSubPriority = BSP_IRQ_PRI_COM;
         nvic_init.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&nvic_init);
 
         /* Config USB low priority interrupt */
-        hook.type       = miniStm32_irq_type_usb;
+        hook.type       = bsp_irq_type_usb;
         hook.unit       = 0;
-        hook.cbFunc     = miniStm32_usb_lowPriority_isr;
+        hook.cbFunc     = bsp_usb_lowPriority_isr;
         hook.userPtr    = (void *)&usb.device;
-        miniStm32_irq_hook_register(&hook);
+        bsp_irq_hook_register(&hook);
 
         NVIC_ClearPendingIRQ(USB_LP_CAN1_RX0_IRQn);
         nvic_init.NVIC_IRQChannel = USB_LP_CAN1_RX0_IRQn;
         nvic_init.NVIC_IRQChannelPreemptionPriority = 0;
-        nvic_init.NVIC_IRQChannelSubPriority = MINISTM32_IRQ_PRI_COM;
+        nvic_init.NVIC_IRQChannelSubPriority = BSP_IRQ_PRI_COM;
         nvic_init.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&nvic_init);
 
@@ -1270,7 +1270,7 @@ rt_err_t miniStm32_hw_usb_core_init(void)
  * @return
  *   Error code
  ******************************************************************************/
-void usb_endpoint_register(struct miniStm32_usb_unit *cfg,
+void usb_endpoint_register(struct bsp_usb_unit *cfg,
     usb_endpoint_register_t *ep)
 {
     if (ep->num > 0)
@@ -1310,7 +1310,7 @@ rt_uint8_t usb_find_entry(rt_uint8_t table)
     }
 }
 
-void usb_device_register(struct miniStm32_usb_unit *cfg,
+void usb_device_register(struct bsp_usb_unit *cfg,
     const usb_device_property_t *prep)
 {
     if (prep)
@@ -1342,7 +1342,7 @@ void debug(void)
 FINSH_FUNCTION_EXPORT(debug, debug.)
 #endif
 */
-#endif /* defined(BOARD_USING_USB) */
+#endif /* defined(BSP_USING_USB) */
 /***************************************************************************//**
  * @}
  ******************************************************************************/

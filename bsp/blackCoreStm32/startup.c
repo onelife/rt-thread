@@ -80,12 +80,12 @@ void rtthread_startup(void)
 
 #ifdef RT_USING_HEAP
  #ifdef __CC_ARM
-    rt_system_heap_init((void*)&Image$$RW_IRAM1$$ZI$$Limit, (void*)MINISTM32_SRAM_END);
+    rt_system_heap_init((void*)&Image$$RW_IRAM1$$ZI$$Limit, (void*)BSP_SRAM_END);
  #elif __ICCARM__
-    rt_system_heap_init(__segment_end("HEAP"), (void*)MINISTM32_SRAM_END);
+    rt_system_heap_init(__segment_end("HEAP"), (void*)BSP_SRAM_END);
  #else
     /* init memory system */
-    rt_system_heap_init((void*)&__bss_end, (void*)MINISTM32_SRAM_END);
+    rt_system_heap_init((void*)&__bss_end, (void*)BSP_SRAM_END);
  #endif
 #endif
 
@@ -107,17 +107,11 @@ void rtthread_startup(void)
     /* init first level drivers */
     rt_hw_driver_init();
 
-	/* init all device */
-	rt_device_init_all();
-
 	/* show version */
 	rt_show_version();
 
     /* init second level drivers */
     rt_hw_driver2_init();
-
-	/* init all device again */
-	rt_device_init_all();
 
     /* init finsh */
 #ifdef RT_USING_FINSH
@@ -126,7 +120,7 @@ void rtthread_startup(void)
 #endif
 
     /* Initialize gui server */
-#ifdef RT_USING_RTGUI
+#ifdef RT_USING_GUIENGINE
     rtgui_system_server_init();
 #endif
 
