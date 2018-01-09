@@ -1,0 +1,40 @@
+import rtconfig
+Import('RTT_ROOT')
+from building import *
+
+# Common bsp files
+src_bsp = ['application.c', 'startup.c', 'board.c']
+src_drv = ['drv_rtc.c']
+src_hdl = ['hdl_interrupt.c']
+
+# Optional bsp files
+print '*'*30
+if GetDepend('BOARD_USING_USART1') or GetDepend('BOARD_USING_USART2') or GetDepend('BOARD_USING_USART3'):
+    src_drv.append('drv_usart.c')
+    print "BOARD_USING_USARTx"
+if GetDepend('MINISTM32_USING_SPI1') or GetDepend('MINISTM32_USING_SPI2') or GetDepend('MINISTM32_USING_SPI3'):
+    src_drv.append('drv_spi.c')
+    print "MINISTM32_USING_SPIx"
+if GetDepend('BOARD_USING_LED1') or GetDepend('BOARD_USING_LED2'):
+    src_drv.append('drv_led.c')
+    print "BOARD_USING_LEDx"
+if GetDepend('BOARD_USING_OLED'):
+    src_drv.append('drv_oled.c')
+    print "BOARD_USING_OLED"
+if GetDepend('BOARD_USING_SPISD'):
+    src_drv.append('drv_sdcard.c')
+    print "BOARD_USING_SPISD"
+if GetDepend('BOARD_USING_USB'):
+    src_drv.append('drv_usb_core.c')
+    print "BOARD_USING_USB"
+if GetDepend('BOARD_USING_USB_VIRTUAL_COM'):
+    src_drv.append('drv_usb_com.c')
+    print "BOARD_USING_USB_VIRTUAL_COM"
+print '*'*30
+
+src = src_bsp + src_drv + src_hdl
+CPPPATH = [ GetCurrentDir() ]
+CPPDEFINES = []
+group = DefineGroup('Startup', src, depend = [''], CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES)
+
+Return('group')
