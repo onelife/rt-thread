@@ -347,7 +347,7 @@
               <MiscControls />
               <Define />
               <Undefine />
-              <IncludePath>applications;.;CMSIS\Include;CMSIS\DeviceSupport;drivers;..\..\include;..\..\libcpu\arm\cortex-m4;..\..\libcpu\arm\common;..\..\components\finsh</IncludePath>
+              <IncludePath>.;..\..\include;applications;.;CMSIS\Include;CMSIS\DeviceSupport;drivers;..\..\libcpu\arm\common;..\..\libcpu\arm\cortex-m4;..\..\components\finsh;..\..\components\libc\compilers\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -378,78 +378,13 @@
             <ScatterFile />
             <IncludeLibs />
             <IncludeLibsPath />
-            <Misc> --keep *.o(.rti_fn.*)   --keep *.o(FSymTab) --keep *.o(VSymTab) </Misc>
+            <Misc />
             <LinkerInputFile />
             <DisabledWarnings />
           </LDads>
         </TargetArmAds>
       </TargetOption>
       <Groups>
-        <Group>
-          <GroupName>Applications</GroupName>
-          <Files>
-            <File>
-              <FileName>application.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>applications\application.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>demo.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>applications\demo.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>startup.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>applications\startup.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>CMSIS</GroupName>
-          <Files>
-            <File>
-              <FileName>system_mb9abxxx.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>CMSIS\DeviceSupport\system_mb9abxxx.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>startup_mb9bf56xr.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>CMSIS\DeviceSupport\arm\startup_mb9bf56xr.s</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Drivers</GroupName>
-          <Files>
-            <File>
-              <FileName>board.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>drivers\board.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>led.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>drivers\led.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>serial.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>drivers\serial.c</FilePath>
-            </File>
-          </Files>
-        </Group>
         <Group>
           <GroupName>Kernel</GroupName>
           <Files>
@@ -464,6 +399,13 @@
               <FileName>components.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\src\components.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>cpu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\cpu.c</FilePath>
             </File>
           </Files>
           <Files>
@@ -552,21 +494,72 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>CORTEX-M4</GroupName>
+          <GroupName>Applications</GroupName>
           <Files>
             <File>
-              <FileName>cpuport.c</FileName>
+              <FileName>application.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\libcpu\arm\cortex-m4\cpuport.c</FilePath>
+              <FilePath>applications\application.c</FilePath>
             </File>
           </Files>
           <Files>
             <File>
-              <FileName>context_rvds.S</FileName>
-              <FileType>2</FileType>
-              <FilePath>..\..\libcpu\arm\cortex-m4\context_rvds.S</FilePath>
+              <FileName>demo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>applications\demo.c</FilePath>
             </File>
           </Files>
+          <Files>
+            <File>
+              <FileName>startup.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>applications\startup.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>CMSIS</GroupName>
+          <Files>
+            <File>
+              <FileName>system_mb9abxxx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>CMSIS\DeviceSupport\system_mb9abxxx.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>startup_mb9bf56xr.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>CMSIS\DeviceSupport\arm\startup_mb9bf56xr.s</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Drivers</GroupName>
+          <Files>
+            <File>
+              <FileName>board.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\board.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\led.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>serial.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>drivers\serial.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>cpu</GroupName>
           <Files>
             <File>
               <FileName>backtrace.c</FileName>
@@ -588,6 +581,20 @@
               <FilePath>..\..\libcpu\arm\common\showmem.c</FilePath>
             </File>
           </Files>
+          <Files>
+            <File>
+              <FileName>cpuport.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\libcpu\arm\cortex-m4\cpuport.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>context_rvds.S</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\..\libcpu\arm\cortex-m4\context_rvds.S</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>finsh</GroupName>
@@ -596,13 +603,6 @@
               <FileName>shell.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\components\finsh\shell.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>symbol.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\finsh\symbol.c</FilePath>
             </File>
           </Files>
           <Files>

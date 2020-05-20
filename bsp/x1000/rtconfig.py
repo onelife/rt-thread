@@ -10,9 +10,9 @@ if os.getenv('RTT_CC'):
 
 if  CROSS_TOOL == 'gcc':
     PLATFORM    = 'gcc'
-    EXEC_PATH   = r'E:\work\env\tools\gnu_gcc\mips_gcc\mips-2016.05\bin'
+    EXEC_PATH   = r'/opt/mips-2016.05/bin/'
 else:
-    print 'Please make sure your toolchains is GNU GCC!'
+    print('Please make sure your toolchains is GNU GCC!')
     exit(0)
 
 if os.getenv('RTT_EXEC_PATH'):

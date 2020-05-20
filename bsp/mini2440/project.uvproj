@@ -343,7 +343,7 @@
               <MiscControls>--diag_suppress=870</MiscControls>
               <Define>RT_USING_ARM_LIBC</Define>
               <Undefine />
-              <IncludePath>applications;.;drivers;..\..\include;..\..\libcpu\arm\s3c24x0;..\..\libcpu\arm\common;..\..\components\dfs\include;..\..\components\dfs\filesystems\devfs;..\..\components\dfs\filesystems\elmfat;..\..\components\drivers\include;..\..\components\external\jpeg;..\..\components\finsh;..\..\components\libc\compilers\armlibc;..\..\components\libc\pthreads;..\..\components\net\lwip-2.0.2\src;..\..\components\net\lwip-2.0.2\src\include;..\..\components\net\lwip-2.0.2\src\include\ipv4;..\..\components\net\lwip-2.0.2\src\arch\include;..\..\components\net\lwip-2.0.2\src\include\netif</IncludePath>
+              <IncludePath>.;..\..\include;applications;.;drivers;..\..\libcpu\arm\common;..\..\libcpu\arm\s3c24x0;..\..\components\dfs\include;..\..\components\dfs\filesystems\devfs;..\..\components\dfs\filesystems\elmfat;..\..\components\drivers\include;..\..\components\finsh;..\..\components\libc\compilers\armlibc;..\..\components\libc\compilers\common;..\..\components\libc\pthreads;..\..\components\libc\time;..\..\components\net\lwip-2.0.2\src;..\..\components\net\lwip-2.0.2\src\include;..\..\components\net\lwip-2.0.2\src\include\ipv4;..\..\components\net\lwip-2.0.2\src\arch\include;..\..\components\net\lwip-2.0.2\src\include\netif;..\..\components\net\lwip-2.0.2\src\include\posix</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -373,13 +373,121 @@
             <ScatterFile>rtthread-mini2440.sct</ScatterFile>
             <IncludeLibs />
             <IncludeLibsPath />
-            <Misc> --keep *.o(RTMSymTab)   --keep *.o(FSymTab) --keep *.o(VSymTab) </Misc>
+            <Misc />
             <LinkerInputFile />
             <DisabledWarnings />
           </LDads>
         </TargetArmAds>
       </TargetOption>
       <Groups>
+        <Group>
+          <GroupName>Kernel</GroupName>
+          <Files>
+            <File>
+              <FileName>clock.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\clock.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>components.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\components.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>cpu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\cpu.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>device.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\device.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>idle.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\idle.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>ipc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\ipc.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>irq.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\irq.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>kservice.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\kservice.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>mem.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\mem.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>mempool.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\mempool.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>object.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\object.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>scheduler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\scheduler.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>signal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\signal.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>thread.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\thread.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\src\timer.c</FilePath>
+            </File>
+          </Files>
+        </Group>
         <Group>
           <GroupName>Applications</GroupName>
           <Files>
@@ -436,111 +544,31 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Kernel</GroupName>
+          <GroupName>cpu</GroupName>
           <Files>
             <File>
-              <FileName>clock.c</FileName>
+              <FileName>backtrace.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\src\clock.c</FilePath>
+              <FilePath>..\..\libcpu\arm\common\backtrace.c</FilePath>
             </File>
           </Files>
           <Files>
             <File>
-              <FileName>device.c</FileName>
+              <FileName>div0.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\src\device.c</FilePath>
+              <FilePath>..\..\libcpu\arm\common\div0.c</FilePath>
             </File>
           </Files>
           <Files>
             <File>
-              <FileName>idle.c</FileName>
+              <FileName>showmem.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\src\idle.c</FilePath>
+              <FilePath>..\..\libcpu\arm\common\showmem.c</FilePath>
             </File>
           </Files>
           <Files>
             <File>
-              <FileName>ipc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\ipc.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>irq.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\irq.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>kservice.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\kservice.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>mem.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\mem.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>mempool.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\mempool.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>module.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\module.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>object.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\object.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>scheduler.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\scheduler.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>signal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\signal.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>thread.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\thread.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>timer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\src\timer.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>S3C24X0</GroupName>
-          <Files>
-            <File>
-              <FileName>cpu.c</FileName>
+              <FileName>s3c24x0_cpu.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\libcpu\arm\s3c24x0\cpu.c</FilePath>
             </File>
@@ -606,27 +634,6 @@
               <FileName>start_rvds.S</FileName>
               <FileType>2</FileType>
               <FilePath>..\..\libcpu\arm\s3c24x0\start_rvds.S</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>backtrace.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\libcpu\arm\common\backtrace.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>div0.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\libcpu\arm\common\div0.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>showmem.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\libcpu\arm\common\showmem.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -714,6 +721,13 @@
           </Files>
           <Files>
             <File>
+              <FileName>ringblk_buf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\components\drivers\src\ringblk_buf.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
               <FileName>ringbuffer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\components\drivers\src\ringbuffer.c</FilePath>
@@ -735,204 +749,12 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>jpeg</GroupName>
-          <Files>
-            <File>
-              <FileName>jaricom.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jaricom.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jcomapi.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jcomapi.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jutils.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jutils.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jerror.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jerror.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jmemmgr.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jmemmgr.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdapimin.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdapimin.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdapistd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdapistd.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdarith.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdarith.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdtrans.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdtrans.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdmaster.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdmaster.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdinput.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdinput.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdmarker.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdmarker.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdhuff.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdhuff.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdmainct.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdmainct.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdcoefct.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdcoefct.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdpostct.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdpostct.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jddctmgr.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jddctmgr.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jidctfst.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jidctfst.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jidctflt.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jidctflt.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jidctint.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jidctint.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdsample.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdsample.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdcolor.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdcolor.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jquant1.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jquant1.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jquant2.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jquant2.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jdmerge.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jdmerge.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>jmemnobs.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\external\jpeg\jmemnobs.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>finsh</GroupName>
           <Files>
             <File>
               <FileName>shell.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\components\finsh\shell.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
-              <FileName>symbol.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\finsh\symbol.c</FilePath>
             </File>
           </Files>
           <Files>
@@ -1024,13 +846,6 @@
           </Files>
           <Files>
             <File>
-              <FileName>libc_syms.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\libc\compilers\armlibc\libc_syms.c</FilePath>
-            </File>
-          </Files>
-          <Files>
-            <File>
               <FileName>mem_std.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\components\libc\compilers\armlibc\mem_std.c</FilePath>
@@ -1050,16 +865,16 @@
               <FilePath>..\..\components\libc\compilers\armlibc\stubs.c</FilePath>
             </File>
           </Files>
+          <Files>
+            <File>
+              <FileName>time.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\components\libc\compilers\common\time.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>pthreads</GroupName>
-          <Files>
-            <File>
-              <FileName>clock_time.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\components\libc\pthreads\clock_time.c</FilePath>
-            </File>
-          </Files>
           <Files>
             <File>
               <FileName>mqueue.c</FileName>
@@ -1135,6 +950,20 @@
               <FileName>semaphore.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\components\libc\pthreads\semaphore.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>clock_time.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\components\libc\time\clock_time.c</FilePath>
+            </File>
+          </Files>
+          <Files>
+            <File>
+              <FileName>posix_sleep.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\components\libc\time\posix_sleep.c</FilePath>
             </File>
           </Files>
         </Group>

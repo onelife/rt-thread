@@ -1,21 +1,7 @@
 /*
- * File      : pthread.h
- * This file is part of RT-Thread RTOS
- * COPYRIGHT (C) 2006 - 2010, RT-Thread Development Team
+ * Copyright (c) 2006-2018, RT-Thread Development Team
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Change Logs:
  * Date           Author       Notes
@@ -26,6 +12,11 @@
 #define __PTHREAD_H__
 
 #include <rtthread.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <posix_types.h>
 #include <sched.h>
 
@@ -41,7 +32,7 @@
 #define PTHREAD_EXPLICIT_SCHED      0
 #define PTHREAD_INHERIT_SCHED       1
 
-typedef rt_thread_t pthread_t;
+typedef long pthread_t;
 typedef long pthread_condattr_t;
 typedef long pthread_rwlockattr_t;
 typedef long pthread_mutexattr_t;
@@ -85,15 +76,21 @@ enum
 #define PTHREAD_SCOPE_PROCESS   0
 #define PTHREAD_SCOPE_SYSTEM    1
 
+struct sched_param
+{
+    int sched_priority;
+};
+
 struct pthread_attr
 {
-    void*       stack_base;
-    rt_uint32_t stack_size;     /* stack size of thread */
+    void* stackaddr;        /* stack address of thread */
+    int   stacksize;        /* stack size of thread */
 
-    rt_uint8_t priority;        /* priority of thread */
-    rt_uint8_t detachstate;     /* detach state */
-    rt_uint8_t policy;          /* scheduler policy */
-    rt_uint8_t inheritsched;    /* Inherit parent prio/policy */
+    int   inheritsched;     /* Inherit parent prio/policy */
+    int   schedpolicy;      /* scheduler policy */
+    struct sched_param schedparam; /* sched parameter */
+
+    int   detachstate;      /* detach state */
 };
 typedef struct pthread_attr pthread_attr_t;
 
@@ -140,11 +137,6 @@ struct pthread_barrier
 };
 typedef struct pthread_barrier pthread_barrier_t;
 
-struct sched_param
-{
-    int sched_priority;
-};
-
 /* pthread thread interface */
 int pthread_attr_destroy(pthread_attr_t *attr);
 int pthread_attr_init(pthread_attr_t *attr);
@@ -180,10 +172,7 @@ rt_inline int pthread_equal (pthread_t t1, pthread_t t2)
     return t1 == t2;
 }
 
-rt_inline pthread_t pthread_self (void)
-{
-    return rt_thread_self();
-}
+pthread_t pthread_self (void);
 
 void pthread_exit (void *value_ptr);
 int pthread_once(pthread_once_t * once_control, void (*init_routine) (void));
@@ -276,56 +265,8 @@ int pthread_barrier_init(pthread_barrier_t           *barrier,
 
 int pthread_barrier_wait(pthread_barrier_t *barrier);
 
-/*  Signal Generation and Delivery, P1003.1b-1993, p. 63
-    NOTE: P1003.1c/D10, p. 34 adds sigev_notify_function and
-          sigev_notify_attributes to the sigevent structure.  */
-#if 0
-union sigval
-{
-    int    sival_int;    /* Integer signal value */
-    void  *sival_ptr;    /* Pointer signal value */
-};
+#ifdef __cplusplus
+}
 #endif
 
-struct sigevent
-{
-    int              sigev_notify;               /* Notification type */
-    int              sigev_signo;                /* Signal number */
-    union sigval     sigev_value;                /* Signal value */
-    void           (*sigev_notify_function)( union sigval );
-                                               /* Notification function */
-    pthread_attr_t  *sigev_notify_attributes;    /* Notification Attributes */
-};
-
-/* posix clock and timer */
-#define MILLISECOND_PER_SECOND  1000UL
-#define MICROSECOND_PER_SECOND  1000000UL
-#define NANOSECOND_PER_SECOND   1000000000UL
-
-#define MILLISECOND_PER_TICK    (MILLISECOND_PER_SECOND / RT_TICK_PER_SECOND)
-#define MICROSECOND_PER_TICK    (MICROSECOND_PER_SECOND / RT_TICK_PER_SECOND)
-#define NANOSECOND_PER_TICK     (NANOSECOND_PER_SECOND  / RT_TICK_PER_SECOND)
-
-#ifndef CLOCK_REALTIME
-#define CLOCK_REALTIME      1
 #endif
-
-#define CLOCK_CPUTIME_ID    2
-
-#ifndef CLOCK_PROCESS_CPUTIME_ID
-#define CLOCK_PROCESS_CPUTIME_ID CLOCK_CPUTIME_ID
-#endif
-#ifndef CLOCK_THREAD_CPUTIME_ID
-#define CLOCK_THREAD_CPUTIME_ID  CLOCK_CPUTIME_ID
-#endif
-
-#ifndef CLOCK_MONOTONIC
-#define CLOCK_MONOTONIC     4
-#endif
-
-int clock_getres  (clockid_t clockid, struct timespec *res);
-int clock_gettime (clockid_t clockid, struct timespec *tp);
-int clock_settime (clockid_t clockid, const struct timespec *tp);
-
-#endif
-

@@ -284,11 +284,12 @@
         <option>
           <name>CCIncludePath2</name>
           <state />
-          <state>$PROJ_DIR$\..\..\include</state>
-          <state>$PROJ_DIR$\drivers</state>
-          <state>$PROJ_DIR$\..\..\components\CMSIS\Include</state>
-          <state>$PROJ_DIR$\.</state>
+          <state>$PROJ_DIR$\libraries\CMSIS\Include</state>
           <state>$PROJ_DIR$\applications</state>
+          <state>$PROJ_DIR$\drivers</state>
+          <state>$PROJ_DIR$\..\..\components\libc\compilers\common</state>
+          <state>$PROJ_DIR$\.</state>
+          <state>$PROJ_DIR$\..\..\include</state>
           <state>$PROJ_DIR$\..\..\libcpu\arm\cortex-m3</state>
           <state>$PROJ_DIR$\..\..\components\drivers\include</state>
           <state>$PROJ_DIR$\..\..\libcpu\arm\common</state>
@@ -1160,11 +1161,12 @@
         <option>
           <name>CCIncludePath2</name>
           <state />
-          <state>$PROJ_DIR$\..\..\include</state>
-          <state>$PROJ_DIR$\drivers</state>
-          <state>$PROJ_DIR$\..\..\components\CMSIS\Include</state>
-          <state>$PROJ_DIR$\.</state>
+          <state>$PROJ_DIR$\libraries\CMSIS\Include</state>
           <state>$PROJ_DIR$\applications</state>
+          <state>$PROJ_DIR$\drivers</state>
+          <state>$PROJ_DIR$\..\..\components\libc\compilers\common</state>
+          <state>$PROJ_DIR$\.</state>
+          <state>$PROJ_DIR$\..\..\include</state>
           <state>$PROJ_DIR$\..\..\libcpu\arm\cortex-m3</state>
           <state>$PROJ_DIR$\..\..\components\drivers\include</state>
           <state>$PROJ_DIR$\..\..\libcpu\arm\common</state>
@@ -1753,45 +1755,15 @@
     </settings>
   </configuration>
   <group>
-    <name>Applications</name>
-    <file>
-      <name>$PROJ_DIR$\applications\application.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\applications\startup.c</name>
-    </file>
-  </group>
-  <group>
-    <name>Drivers</name>
-    <file>
-      <name>$PROJ_DIR$\drivers\board.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\drivers\fm3_uart.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\drivers\led.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\drivers\nand.c</name>
-    </file>
-  </group>
-  <group>
-    <name>CMSIS</name>
-    <file>
-      <name>$PROJ_DIR$\libraries\Device\FUJISTU\MB9BF50x\Source\system_mb9bf50x.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\libraries\Device\FUJISTU\MB9BF50x\Source\IAR\startup_mb9bf50x.S</name>
-    </file>
-  </group>
-  <group>
     <name>Kernel</name>
     <file>
       <name>$PROJ_DIR$\..\..\src\clock.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\src\components.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\src\cpu.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\src\device.c</name>
@@ -1834,13 +1806,40 @@
     </file>
   </group>
   <group>
-    <name>CORTEX-M3</name>
+    <name>Applications</name>
     <file>
-      <name>$PROJ_DIR$\..\..\libcpu\arm\cortex-m3\cpuport.c</name>
+      <name>$PROJ_DIR$\applications\application.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\libcpu\arm\cortex-m3\context_iar.S</name>
+      <name>$PROJ_DIR$\applications\startup.c</name>
     </file>
+  </group>
+  <group>
+    <name>Drivers</name>
+    <file>
+      <name>$PROJ_DIR$\drivers\board.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\fm3_uart.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\led.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\nand.c</name>
+    </file>
+  </group>
+  <group>
+    <name>CMSIS</name>
+    <file>
+      <name>$PROJ_DIR$\libraries\Device\FUJISTU\MB9BF50x\Source\system_mb9bf50x.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\libraries\Device\FUJISTU\MB9BF50x\Source\IAR\startup_mb9bf50x.S</name>
+    </file>
+  </group>
+  <group>
+    <name>cpu</name>
     <file>
       <name>$PROJ_DIR$\..\..\libcpu\arm\common\backtrace.c</name>
     </file>
@@ -1849,6 +1848,12 @@
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\libcpu\arm\common\showmem.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\libcpu\arm\cortex-m3\cpuport.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\libcpu\arm\cortex-m3\context_iar.S</name>
     </file>
   </group>
   <group>
@@ -1866,6 +1871,9 @@
       <name>$PROJ_DIR$\..\..\components\drivers\src\pipe.c</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\src\ringblk_buf.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\..\..\components\drivers\src\ringbuffer.c</name>
     </file>
     <file>
@@ -1879,9 +1887,6 @@
     <name>finsh</name>
     <file>
       <name>$PROJ_DIR$\..\..\components\finsh\shell.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\components\finsh\symbol.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\components\finsh\cmd.c</name>
@@ -1916,5 +1921,8 @@
     <file>
       <name>$PROJ_DIR$\..\..\components\finsh\finsh_token.c</name>
     </file>
+  </group>
+  <group>
+    <name>libc</name>
   </group>
 </project>
