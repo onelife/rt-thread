@@ -904,6 +904,7 @@ void list_if(void)
     rt_exit_critical();
 }
 FINSH_FUNCTION_EXPORT(list_if, list network interface information);
+MSH_CMD_EXPORT(list_if, list network interface information);
 
 #if LWIP_TCP
 #include <lwip/tcp.h>
@@ -966,6 +967,7 @@ void list_tcps(void)
     rt_exit_critical();
 }
 FINSH_FUNCTION_EXPORT(list_tcps, list all of tcp connections);
+MSH_CMD_EXPORT(list_tcps, list all of tcp connections);
 #endif /* LWIP_TCP */
 
 #if LWIP_UDP
@@ -996,6 +998,7 @@ void list_udps(void)
     rt_exit_critical();
 }
 FINSH_FUNCTION_EXPORT(list_udps, list all of udp connections);
+MSH_CMD_EXPORT(list_udps, list all of udp connections);
 #endif /* LWIP_UDP */
 
 #endif

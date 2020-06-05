@@ -31,7 +31,10 @@ if GetDepend(['RT_USING_I2C', 'RT_USING_I2C_BITOPS']):
         src += ['drv_soft_i2c.c']
 
 if GetDepend(['BSP_USING_ETH', 'RT_USING_LWIP']):
-    src += ['drv_eth.c']
+    if GetDepend('BSP_USING_ETH_0COPY'):
+        src += ['drv_eth_0copy.c']
+    else:
+        src += ['drv_eth.c']
 
 if GetDepend(['RT_USING_ADC']):
     src += Glob('drv_adc.c')

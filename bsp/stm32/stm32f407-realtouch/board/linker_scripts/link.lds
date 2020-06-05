@@ -1,15 +1,15 @@
 /*
- * linker script for STM32F4xx with GNU ld
- * bernard.xiong 2009-10-14
- * flybreak      2018-11-19  Add support for RAM2
+ * linker script for RealTouch STM32F4xx with GNU ld
+ * onelife       2020-06-01  
  */
 
 /* Program Entry, set to mark it as "used" and avoid gc */
 MEMORY
 {
     CODE (rx) : ORIGIN = 0x08000000, LENGTH = 1024k /* 1024KB flash */
-    RAM1 (rw) : ORIGIN = 0x20000000, LENGTH =  128k /* 128K sram */
-    RAM2 (rw) : ORIGIN = 0x10000000, LENGTH =   64k /* 64K sram */
+    RAM  (rw) : ORIGIN = 0x20000000, LENGTH =  128k /* 128KB sram */
+    CCM  (rw) : ORIGIN = 0x10000000, LENGTH =   64k /* 64KB sram */
+    ERAM (rw) : ORIGIN = 0x60000000, LENGTH = 1024k /* 1024KB ext sram */
 }
 ENTRY(Reset_Handler)
 _system_stack_size = 0x200;
@@ -73,6 +73,13 @@ SECTIONS
 
     /* .data section which is used for initialized data */
 
+    .large (NOLOAD) :
+    {
+        *(.mac)
+        *lwip*/*.o (.bss.*)
+        *lwip*/*.o (COMMON)
+    } >ERAM
+
     .data : AT (_sidata)
     {
         . = ALIGN(4);
@@ -91,7 +98,7 @@ SECTIONS
         . = ALIGN(4);
         /* This is used by the startup in order to initialize the .data secion */
         _edata = . ;
-    } >RAM1
+    } >RAM
 
     .stack : 
     {
@@ -100,7 +107,7 @@ SECTIONS
         . = . + _system_stack_size;
         . = ALIGN(4);
         _estack = .;
-    } >RAM1
+    } >RAM
 
     __bss_start = .;
     .bss :
@@ -109,6 +116,7 @@ SECTIONS
         /* This is used by the startup in order to initialize the .bss secion */
         _sbss = .;
 
+        *(.fast)
         *(.bss)
         *(.bss.*)
         *(COMMON)
@@ -118,7 +126,7 @@ SECTIONS
         _ebss = . ;
         
         *(.bss.init)
-    } > RAM1
+    } > RAM
     __bss_end = .;
 
     _end = .;

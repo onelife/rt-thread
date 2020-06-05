@@ -124,6 +124,7 @@ static int rt_bsp_init(void)
   // MX_SPI2_Init();
   // MX_USB_OTG_FS_PCD_Init();
   MX_FSMC_Init();
+  memset((void *)0x60000000U, 0x00, 0x00100000U); // TODO
   // MX_I2C1_Init();
   // MX_I2S3_Init();
   /* USER CODE BEGIN 2 */

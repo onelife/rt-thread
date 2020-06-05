@@ -243,6 +243,9 @@ path = [cwd + '/src',
     cwd + '/src/arch/include',
     cwd + '/src/include/netif']
 
+if GetDepend('RT_LWIP_MEM_USE_POOLS'):
+    src += ['src/core/mem.c']
+
 if not GetDepend('RT_USING_SAL'):
     path += [cwd + '/src/include/compat/posix']
 
@@ -259,6 +262,9 @@ if GetDepend(['RT_USING_LWIP_IPV6']):
 
 if GetDepend(['RT_LWIP_USING_PING']):
     src += lwipping_SRCS
+
+if GetDepend(['RT_LWIP_IPERF']):
+    src += lwipiperf_SRCS
 
 group = DefineGroup('lwIP', src, depend = ['RT_USING_LWIP', 'RT_USING_LWIP210'], CPPPATH = path)
 

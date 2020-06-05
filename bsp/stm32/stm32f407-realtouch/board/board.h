@@ -21,6 +21,17 @@
 extern "C" {
 #endif
 
+/* SD Card IO */
+#define STM32_SD_CD_PORT (GPIOE)
+#define STM32_SD_CD_PIN (GPIO_PIN_2)
+#define STM32_SD_WP_PORT (GPIOG)
+#define STM32_SD_WP_PIN (GPIO_PIN_8)
+
+/* PHY Chip IO */
+#define STM32_PHY_NRST_PORT (GPIOC)
+#define STM32_PHY_NRST_PIN (GPIO_PIN_0)
+
+
 #define STM32_SRAM_SIZE (128)
 #define STM32_SRAM_END (0x20000000 + STM32_SRAM_SIZE * 1024)
 
@@ -32,11 +43,6 @@ extern "C" {
 #define STM32_EXT_SRAM_DATA_WIDTH (16)
 #define STM32_EXT_SRAM_START_ADRESS (0x60000000U)
 #define STM32_EXT_SRAM_SIZE (0x00100000U)
-
-#define STM32_SD_CD_PORT (GPIOE)
-#define STM32_SD_CD_PIN (GPIO_PIN_2)
-#define STM32_SD_WP_PORT (GPIOG)
-#define STM32_SD_WP_PIN (GPIO_PIN_8)
 
 #if defined(__CC_ARM) || defined(__CLANG_ARM)
 extern int Image$$RW_IRAM1$$ZI$$Limit;

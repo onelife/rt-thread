@@ -712,6 +712,7 @@ mem_overflow_init_raw(void *p, size_t size)
 }
 #endif /* MEM_OVERFLOW_CHECK || MEMP_OVERFLOW_CHECK */
 
+#ifndef RT_LWIP_MEM_USE_POOLS
 RT_WEAK
 void mem_init(void)
 {
@@ -738,6 +739,7 @@ void  mem_free(void *mem)
 {
     rt_free(mem);
 }
+#endif /* RT_LWIP_MEM_USE_POOLS */
 
 #ifdef RT_LWIP_PPP
 u32_t sio_read(sio_fd_t fd, u8_t *buf, u32_t size)

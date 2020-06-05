@@ -38,28 +38,16 @@
 #include <rthw.h>
 #include <rtthread.h>
 
+#define LWIP_NO_INTTYPES_H 1
+
+#define X8_F  "x"
 #define U16_F "hu"
 #define S16_F "hd"
 #define X16_F "hx"
 #define U32_F "lu"
 #define S32_F "ld"
 #define X32_F "lx"
-
-#ifdef RT_USING_LIBC
-#if defined(__CC_ARM) || defined(__CLANG_ARM) || defined(__IAR_SYSTEMS_ICC__)
-#include <sys/errno.h>
-#else
-#include <errno.h>
-/* some errno not defined in newlib */
-#define ENSRNOTFOUND 163  /* Domain name not found */
-/* WARNING: ESHUTDOWN also not defined in newlib. We chose
-			180 here because the number "108" which is used
-			in arch.h has been assigned to another error code. */
-#define ESHUTDOWN 180
-#endif /* __CC_ARM/__IAR_SYSTEMS_ICC__ */
-#else
-#define LWIP_PROVIDE_ERRNO
-#endif
+#define SZT_F U32_F
 
 #if defined(RT_USING_LIBC) || defined(RT_USING_MINILIBC)
 #include <sys/time.h>

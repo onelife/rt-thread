@@ -238,11 +238,14 @@
 
 /* ---------- Memory options ---------- */
 #define MEM_ALIGNMENT               4
-#define MEMP_OVERFLOW_CHECK         1 ////
+#ifdef RT_LWIP_MEM_USE_POOLS
+#define MEM_USE_POOLS               1
+#define MEMP_USE_CUSTOM_POOLS       1
+#define MEMP_MEM_INIT               1
+#endif
+#define MEMP_OVERFLOW_CHECK         0
 #define LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT 1 ////
 //#define MEM_LIBC_MALLOC             1
-//#define MEM_USE_POOLS               1
-//#define MEMP_USE_CUSTOM_POOLS       1
 //#define MEM_SIZE                    (1024*64)
 
 #define MEMP_MEM_MALLOC             0
@@ -250,7 +253,7 @@
 /* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
    sends a lot of data out of ROM (or other static memory), this
    should be set high. */
-#define MEMP_NUM_PBUF               32 //16
+#define MEMP_NUM_PBUF               64
 
 /* the number of struct netconns */
 #ifdef RT_MEMP_NUM_NETCONN
@@ -307,7 +310,7 @@
 
 /* PBUF_LINK_HLEN: the number of bytes that should be allocated for a
    link level header. */
-#define PBUF_LINK_HLEN              16
+// #define PBUF_LINK_HLEN              16
 
 #ifdef RT_LWIP_ETH_PAD_SIZE
 #define ETH_PAD_SIZE                RT_LWIP_ETH_PAD_SIZE
@@ -392,14 +395,14 @@
 
 /* ---------- Checksum options ---------- */
 #ifdef RT_LWIP_USING_HW_CHECKSUM
-#define CHECKSUM_GEN_IP                 0
-#define CHECKSUM_GEN_UDP                0
-#define CHECKSUM_GEN_TCP                0
-#define CHECKSUM_GEN_ICMP               0
-#define CHECKSUM_CHECK_IP               0
-#define CHECKSUM_CHECK_UDP              0
-#define CHECKSUM_CHECK_TCP              0
-#define CHECKSUM_CHECK_ICMP             0
+#define CHECKSUM_GEN_IP             0
+#define CHECKSUM_GEN_UDP            0
+#define CHECKSUM_GEN_TCP            0
+#define CHECKSUM_GEN_ICMP           0
+#define CHECKSUM_CHECK_IP           0
+#define CHECKSUM_CHECK_UDP          0
+#define CHECKSUM_CHECK_TCP          0
+#define CHECKSUM_CHECK_ICMP         0
 #endif
 
 /* ---------- IP options ---------- */

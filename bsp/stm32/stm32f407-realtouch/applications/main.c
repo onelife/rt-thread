@@ -30,17 +30,18 @@ int main(void)
         rt_pin_write(LED0_PIN, PIN_LOW);
         rt_thread_mdelay(500);
 
-        if (count < 30)
+        if (count < 10)
             rt_kprintf("count %d\n", count);
         // if (count < 60)
         //     rt_kprintf("cd %d wp %d\n", HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_2), HAL_GPIO_ReadPin(GPIOG, GPIO_PIN_8));
 
-        // if (count == 30) {
-        //     if (dfs_mount("sd0", "/sd", "elm", 0, 0))
-        //         rt_kprintf("mount failed\n");
-        //     else
-        //         rt_kprintf("mount ok\n");
-        // }
+        if (count == 10) {
+        //     extern int rt_hw_stm32_eth_init(void);
+
+            rt_kprintf("START\n");
+        //     rt_hw_stm32_eth_init();
+            rt_kprintf("END\n");
+        }
     }
 
     return RT_EOK;
